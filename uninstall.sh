@@ -9,6 +9,7 @@ typeset -r REMOTE_SCRIPT="${ROOT}/templates/remote/uninstall-user.sh"
 
 source "${ROOT}/lib/ui.zsh"
 source "${ROOT}/lib/input.zsh"
+source "${ROOT}/lib/uninstall_local.zsh"
 
 uninstall_die() {
   proxygpt_error "$1"
@@ -121,17 +122,6 @@ remove_server_user() {
   (( cleanup_status == 0 )) || return "$cleanup_status"
 }
 
-remove_path() {
-  local path="$1"
-  local parent="${path:h}"
-  [[ -e "$path" || -L "$path" ]] || return 0
-  if [[ -w "$parent" ]]; then
-    rm -rf -- "$path" || return 1
-  else
-    sudo rm -rf -- "$path" || return 1
-  fi
-}
-
 validate_manifest
 
 proxygpt_prompt_menu "Uninstall scope:" \
@@ -161,11 +151,11 @@ if [[ "$SCOPE" == 2 ]]; then
   remove_server_user || exit $?
 fi
 
-remove_path "$APP_PATH" || exit $?
-remove_path "$CLI_LINK" || exit $?
+proxygpt_remove_configured_path "$APP_PATH" || exit $?
+proxygpt_remove_configured_path "$CLI_LINK" || exit $?
 if [[ "$DELETE_KEY" == yes ]]; then
   rm -f -- "$SSH_KEY" "${SSH_KEY}.pub" || exit $?
 fi
-remove_path "$DATA_ROOT" || exit $?
+proxygpt_remove_configured_path "$DATA_ROOT" || exit $?
 
 proxygpt_success "ProxyGPT uninstall completed"

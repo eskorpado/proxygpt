@@ -59,6 +59,7 @@ home directory. Shared Squid and sshd configuration are always preserved.
 ./tests/tunnel-phase.zsh
 ./tests/app-phase.zsh
 ./tests/integration-phase.zsh
+./tests/uninstall-local.zsh
 ```
 
 These checks do not configure or contact a real server.
