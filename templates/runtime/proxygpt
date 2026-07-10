@@ -1,0 +1,105 @@
+#!/bin/zsh
+
+emulate -LR zsh
+setopt ERR_EXIT NO_UNSET PIPE_FAIL
+unsetopt BG_NICE
+
+if (( $# != 0 )); then
+  print -ru2 -- "proxygpt does not accept application arguments"
+  exit 64
+fi
+
+typeset -r SCRIPT_DIR="${0:A:h}"
+typeset -r CONFIG_FILE="${SCRIPT_DIR:h}/config/proxygpt.conf"
+typeset -r TUNNEL_COMMAND="${SCRIPT_DIR}/proxygpt-tunnel"
+
+if [[ ! -r "$CONFIG_FILE" ]]; then
+  print -ru2 -- "ProxyGPT configuration is not readable: ${CONFIG_FILE}"
+  exit 1
+fi
+
+source "$CONFIG_FILE"
+
+: "${TARGET_APP_NAME:?Missing TARGET_APP_NAME in ProxyGPT config}"
+: "${TARGET_APP_EXECUTABLE:?Missing TARGET_APP_EXECUTABLE in ProxyGPT config}"
+: "${LOCAL_PORT:?Missing LOCAL_PORT in ProxyGPT config}"
+
+if [[ ! -x "$TARGET_APP_EXECUTABLE" ]]; then
+  print -ru2 -- "Target app executable is missing: ${TARGET_APP_EXECUTABLE}"
+  exit 1
+fi
+
+if [[ ! -x "$TUNNEL_COMMAND" ]]; then
+  print -ru2 -- "ProxyGPT tunnel command is missing: ${TUNNEL_COMMAND}"
+  exit 1
+fi
+
+"$TUNNEL_COMMAND" start
+
+typeset -i TUNNEL_ACTIVE=1
+
+stop_tunnel() {
+  if (( ! TUNNEL_ACTIVE )); then
+    return 0
+  fi
+
+  if ! "$TUNNEL_COMMAND" stop; then
+    print -ru2 -- "Warning: ProxyGPT could not stop the SSH tunnel"
+  fi
+
+  TUNNEL_ACTIVE=0
+}
+
+TRAPEXIT() {
+  stop_tunnel
+}
+
+target_is_running() {
+  local process_name="${TARGET_APP_EXECUTABLE:t}"
+  local running_command
+
+  while IFS= read -r running_command; do
+    if [[ "${running_command:t}" == "$process_name" ]]; then
+      return 0
+    fi
+  done < <(/bin/ps -axo comm= 2>/dev/null)
+
+  return 1
+}
+
+if target_is_running; then
+  print -ru2 -- \
+    "Warning: ${TARGET_APP_NAME} is already running; proxy flags may be ignored"
+
+  PROXYGPT_TARGET_NAME="$TARGET_APP_NAME" /usr/bin/osascript \
+    -e 'set appName to system attribute "PROXYGPT_TARGET_NAME"' \
+    -e 'display notification "Proxy flags may be ignored because the app is already running." with title "ProxyGPT" subtitle appName' \
+    >/dev/null 2>&1 || true
+fi
+
+typeset -r PROXY="http://127.0.0.1:${LOCAL_PORT}"
+typeset -r NO_PROXY_VALUE="localhost,127.0.0.1,::1"
+typeset -r ELECTRON_BYPASS="<local>;localhost;127.0.0.1;[::1]"
+
+env \
+  HTTP_PROXY="$PROXY" \
+  HTTPS_PROXY="$PROXY" \
+  NO_PROXY="$NO_PROXY_VALUE" \
+  http_proxy="$PROXY" \
+  https_proxy="$PROXY" \
+  no_proxy="$NO_PROXY_VALUE" \
+  "$TARGET_APP_EXECUTABLE" \
+  --proxy-server="$PROXY" \
+  --proxy-bypass-list="$ELECTRON_BYPASS" &
+
+typeset -r TARGET_PID=$!
+typeset -i TARGET_EXIT_CODE
+
+if wait "$TARGET_PID"; then
+  TARGET_EXIT_CODE=0
+else
+  TARGET_EXIT_CODE=$?
+fi
+
+stop_tunnel
+exit "$TARGET_EXIT_CODE"

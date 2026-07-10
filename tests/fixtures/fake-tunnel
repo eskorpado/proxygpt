@@ -1,0 +1,7 @@
+#!/bin/zsh
+
+print -r -- "$1" >> "${PROXYGPT_TEST_EVENTS:?}"
+
+if [[ "$1" == "stop" ]]; then
+  exit "${PROXYGPT_TEST_STOP_EXIT:-0}"
+fi

@@ -1,0 +1,4 @@
+#!/bin/zsh
+
+print -r -- "target" >> "${PROXYGPT_TEST_EVENTS:?}"
+exit "${PROXYGPT_TEST_TARGET_EXIT:-0}"
