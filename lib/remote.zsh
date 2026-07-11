@@ -1,16 +1,16 @@
-# SSH/scp transport for one staged privileged server script.
+# Транспорт SSH/scp для одного подготовленного привилегированного серверного скрипта.
 
 proxygpt_remote_admin_target() {
   local admin_user="$(proxygpt_config_get admin_user)"
   local server_host="$(proxygpt_config_get server_host)"
 
   if [[ ! "$admin_user" =~ '^[A-Za-z_][A-Za-z0-9._-]*$' ]]; then
-    proxygpt_die "Invalid SSH admin username: ${admin_user}"
+    proxygpt_die "Недопустимое имя администратора SSH: ${admin_user}"
     return 1
   fi
 
   if [[ ! "$server_host" =~ '^[A-Za-z0-9][A-Za-z0-9._-]*$' ]]; then
-    proxygpt_die "Invalid server hostname or SSH alias: ${server_host}"
+    proxygpt_die "Недопустимое имя сервера или SSH-алиас: ${server_host}"
     return 1
   fi
 
@@ -58,7 +58,7 @@ proxygpt_admin_master_start() {
   local control_socket
 
   if proxygpt_admin_master_check; then
-    proxygpt_success "Administrative SSH master is already running"
+    proxygpt_success "Административный SSH master уже запущен"
     return 0
   fi
 
@@ -68,7 +68,7 @@ proxygpt_admin_master_start() {
 
   if ! proxygpt_admin_validate_control_dir "$control_dir" || \
      ! proxygpt_admin_validate_control_socket "$control_socket"; then
-    proxygpt_die "Unexpected administrative control socket path: ${control_socket}"
+    proxygpt_die "Неожиданный путь административного управляющего сокета: ${control_socket}"
     return 1
   fi
 
@@ -86,21 +86,21 @@ proxygpt_admin_master_start() {
     -o ServerAliveCountMax=3 \
     -p "$ssh_port" \
     "$target"; then
-    proxygpt_die "Could not start the administrative SSH master; control directory: ${control_dir}"
+    proxygpt_die "Не удалось запустить административное SSH master-соединение; управляющий каталог: ${control_dir}"
     return 1
   fi
 
   if ! proxygpt_admin_master_check; then
-    proxygpt_die "Administrative SSH master did not become healthy: ${control_socket}"
+    proxygpt_die "Административный SSH master не прошёл проверку: ${control_socket}"
     return 1
   fi
 
-  proxygpt_success "Administrative SSH master started"
+  proxygpt_success "Административный SSH master запущен"
 }
 
 proxygpt_admin_master_require() {
   if ! proxygpt_admin_master_check; then
-    proxygpt_die "Administrative SSH master is not available"
+    proxygpt_die "Административный SSH master недоступен"
     return 1
   fi
 }
@@ -117,7 +117,7 @@ proxygpt_admin_master_stop() {
 
   if ! proxygpt_admin_validate_control_dir "$control_dir" || \
      ! proxygpt_admin_validate_control_socket "$control_socket"; then
-    proxygpt_die "Refusing to clean an unexpected administrative control path"
+    proxygpt_die "Отказ от очистки неожиданного административного управляющего пути"
     return 1
   fi
 
@@ -128,23 +128,23 @@ proxygpt_admin_master_stop() {
       -p "$ssh_port" \
       "$target" \
       >/dev/null; then
-      proxygpt_die "Could not stop the administrative SSH master: ${control_socket}"
+      proxygpt_die "Не удалось остановить административный SSH master: ${control_socket}"
       return 1
     fi
   elif [[ -S "$control_socket" ]]; then
-    proxygpt_die "Administrative control socket is unhealthy and was preserved: ${control_socket}"
+    proxygpt_die "Административный управляющий сокет неисправен и сохранён: ${control_socket}"
     return 1
   fi
 
   if [[ -d "$control_dir" ]]; then
     if ! rmdir "$control_dir"; then
-      proxygpt_warn "Administrative control directory was not empty and was preserved: ${control_dir}"
+      proxygpt_warn "Административный управляющий каталог не пуст и сохранён: ${control_dir}"
     fi
   fi
 
   proxygpt_config_set admin_control_dir ""
   proxygpt_config_set admin_control_socket ""
-  proxygpt_success "Administrative SSH master stopped"
+  proxygpt_success "Административный SSH master остановлен"
 }
 
 proxygpt_remote_create_stage() {
@@ -157,7 +157,7 @@ proxygpt_remote_create_stage() {
   proxygpt_admin_master_require
 
   if [[ "$ssh_port" != <-> ]] || (( ssh_port < 1 || ssh_port > 65535 )); then
-    proxygpt_die "Invalid SSH port: ${ssh_port}"
+    proxygpt_die "Недопустимый порт SSH: ${ssh_port}"
     return 1
   fi
 
@@ -168,18 +168,18 @@ proxygpt_remote_create_stage() {
     -p "$ssh_port" \
     "$target" \
     'umask 077; mktemp -d /tmp/proxygpt.XXXXXXXX')"; then
-    proxygpt_die "Could not create a secure remote staging directory"
+    proxygpt_die "Не удалось создать защищённый удалённый временный каталог"
     return 1
   fi
 
   remote_stage="${remote_stage//$'\r'/}"
   if ! proxygpt_remote_validate_stage_dir "$remote_stage"; then
-    proxygpt_die "Server returned an unexpected staging path: ${remote_stage}"
+    proxygpt_die "Сервер вернул неожиданный путь временного каталога: ${remote_stage}"
     return 1
   fi
 
   proxygpt_config_set remote_stage_dir "$remote_stage"
-  proxygpt_log INFO "Created remote staging directory"
+  proxygpt_log INFO "Создан удалённый временный каталог"
   print -r -- "$remote_stage"
 }
 
@@ -194,18 +194,18 @@ proxygpt_remote_upload_files() {
   proxygpt_admin_master_require
 
   if ! proxygpt_remote_validate_stage_dir "$remote_stage"; then
-    proxygpt_die "Remote staging directory is not initialized"
+    proxygpt_die "Удалённый временный каталог не инициализирован"
     return 1
   fi
 
   if (( $# == 0 )); then
-    proxygpt_die "No files were provided for remote upload"
+    proxygpt_die "Не указаны файлы для удалённой загрузки"
     return 1
   fi
 
   for local_path in "$@"; do
     if [[ ! -f "$local_path" ]]; then
-      proxygpt_die "Remote upload source is not a file: ${local_path}"
+      proxygpt_die "Источник удалённой загрузки не является файлом: ${local_path}"
       return 1
     fi
   done
@@ -218,7 +218,7 @@ proxygpt_remote_upload_files() {
     -- \
     "$@" \
     "${target}:${remote_stage}/"
-  proxygpt_log INFO "Uploaded ${#} file(s) to remote staging"
+  proxygpt_log INFO "Во временный удалённый каталог загружено файлов: ${#}"
 }
 
 proxygpt_remote_remove_stage() {
@@ -231,7 +231,7 @@ proxygpt_remote_remove_stage() {
     return 0
   fi
   if ! proxygpt_remote_validate_stage_dir "$remote_stage"; then
-    proxygpt_die "Refusing to remove an unexpected remote staging path"
+    proxygpt_die "Отказ от удаления неожиданного удалённого временного пути"
     return 1
   fi
   proxygpt_admin_master_require || return 1
@@ -242,28 +242,28 @@ proxygpt_remote_remove_stage() {
     -p "$ssh_port" \
     "$target" \
     "rm -rf -- '${remote_stage}'"; then
-    proxygpt_die "Could not remove remote staging directory: ${remote_stage}"
+    proxygpt_die "Не удалось удалить удалённый временный каталог: ${remote_stage}"
     return 1
   fi
 
   proxygpt_config_set remote_stage_dir "" || return 1
-  proxygpt_log INFO "Removed remote staging directory"
+  proxygpt_log INFO "Удалён удалённый временный каталог"
 }
 
 proxygpt_remote_script_command() {
-  local script_name="${1:?remote script name is required}"
+  local script_name="${1:?требуется имя удалённого скрипта}"
   local remote_stage="$(proxygpt_config_get remote_stage_dir)"
   local admin_user="$(proxygpt_config_get admin_user)"
   local runner
   local remote_script
 
   if ! proxygpt_remote_validate_stage_dir "$remote_stage"; then
-    proxygpt_die "Remote staging directory is not initialized"
+    proxygpt_die "Удалённый временный каталог не инициализирован"
     return 1
   fi
 
   if [[ ! "$script_name" =~ '^[A-Za-z0-9._-]+$' ]]; then
-    proxygpt_die "Unsafe remote script name: ${script_name}"
+    proxygpt_die "Небезопасное имя удалённого скрипта: ${script_name}"
     return 1
   fi
 
@@ -279,7 +279,7 @@ proxygpt_remote_script_command() {
 }
 
 proxygpt_remote_execute_staged_script() {
-  local script_name="${1:?remote script name is required}"
+  local script_name="${1:?требуется имя удалённого скрипта}"
   local target="$(proxygpt_remote_admin_target)"
   local ssh_port="$(proxygpt_config_get ssh_port)"
   local host_key_policy="$(proxygpt_config_get ssh_host_key_policy)"
@@ -289,7 +289,7 @@ proxygpt_remote_execute_staged_script() {
 
   proxygpt_admin_master_require
 
-  proxygpt_log INFO "Starting staged server configuration script"
+  proxygpt_log INFO "Запускается подготовленный скрипт настройки сервера"
 
   if ssh \
     -t \
@@ -305,10 +305,10 @@ proxygpt_remote_execute_staged_script() {
   fi
 
   if (( exit_code != 0 )); then
-    proxygpt_die "Remote server configuration failed with status ${exit_code}; staging preserved: ${remote_stage}"
+    proxygpt_die "Удалённая настройка сервера завершилась с кодом ${exit_code}; временный каталог сохранён: ${remote_stage}"
     return "$exit_code"
   fi
 
   proxygpt_config_set remote_stage_dir ""
-  proxygpt_success "Remote server configuration completed"
+  proxygpt_success "Удалённая настройка сервера завершена"
 }

@@ -1,4 +1,4 @@
-# Central in-memory installer configuration.
+# Центральная конфигурация установщика в памяти.
 
 typeset -ga PROXYGPT_CONFIG_KEYS=(
   profile_id
@@ -81,12 +81,12 @@ proxygpt_config_init() {
 }
 
 proxygpt_configure_profile() {
-  local profile_id="${1:?profile id is required}"
+  local profile_id="${1:?требуется идентификатор профиля}"
   local local_user="${USER:-${LOGNAME:-}}"
   local product_name cli_name bundle_id tunnel_prefix data_root
 
   proxygpt_profile_is_valid "$profile_id" || {
-    proxygpt_die "Unknown output profile: ${profile_id}"
+    proxygpt_die "Неизвестный выходной профиль: ${profile_id}"
     return 1
   }
   [[ -n "$local_user" ]] || local_user="$(id -un)"
@@ -112,15 +112,15 @@ proxygpt_configure_profile() {
 }
 
 proxygpt_config_has_key() {
-  local key="${1:?configuration key is required}"
+  local key="${1:?требуется ключ конфигурации}"
   [[ -n "${PROXYGPT_CONFIG_KEY_SET[$key]-}" ]]
 }
 
 proxygpt_config_get() {
-  local key="${1:?configuration key is required}"
+  local key="${1:?требуется ключ конфигурации}"
 
   if ! proxygpt_config_has_key "$key"; then
-    proxygpt_die "Unknown configuration key: ${key}"
+    proxygpt_die "Неизвестный ключ конфигурации: ${key}"
     return 1
   fi
 
@@ -128,11 +128,11 @@ proxygpt_config_get() {
 }
 
 proxygpt_config_set() {
-  local key="${1:?configuration key is required}"
+  local key="${1:?требуется ключ конфигурации}"
   local value="${2-}"
 
   if ! proxygpt_config_has_key "$key"; then
-    proxygpt_die "Unknown configuration key: ${key}"
+    proxygpt_die "Неизвестный ключ конфигурации: ${key}"
     return 1
   fi
 

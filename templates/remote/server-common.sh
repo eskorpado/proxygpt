@@ -11,41 +11,41 @@ proxygpt_reload_sshd() {
 
     found_service=1
     if systemctl reload "${service_name}.service"; then
-      printf 'Reloaded %s.service\n' "$service_name"
+      printf 'Перезагружена конфигурация %s.service\n' "$service_name"
       return 0
     fi
   done
 
   if (( ! found_service )); then
-    printf 'Neither ssh.service nor sshd.service was found\n' >&2
+    printf 'Не найден ни ssh.service, ни sshd.service\n' >&2
   else
-    printf 'sshd reload failed; restart fallback is disabled\n' >&2
+    printf 'Не удалось перезагрузить конфигурацию sshd; резервный restart отключён\n' >&2
   fi
   return 1
 }
 
 proxygpt_fix_tunnel_key_permissions() {
-  local tunnel_user="${1:?tunnel user is required}"
-  local tunnel_home="${2:?tunnel home is required}"
-  local primary_group="${3:?primary group is required}"
+  local tunnel_user="${1:?требуется tunnel-пользователь}"
+  local tunnel_home="${2:?требуется home tunnel-пользователя}"
+  local primary_group="${3:?требуется основная группа}"
   local ssh_dir="${tunnel_home}/.ssh"
   local authorized_keys="${ssh_dir}/authorized_keys"
 
   if [[ ! -d "$tunnel_home" || -L "$tunnel_home" ]]; then
-    printf 'Tunnel home is not a real directory: %s\n' "$tunnel_home" >&2
+    printf 'Домашний каталог пользователя туннеля не является обычным каталогом: %s\n' "$tunnel_home" >&2
     return 1
   fi
 
   if [[ -e "$ssh_dir" || -L "$ssh_dir" ]]; then
     if [[ ! -d "$ssh_dir" || -L "$ssh_dir" ]]; then
-      printf 'Refusing unusual .ssh object: %s\n' "$ssh_dir" >&2
+      printf 'Отказ от обработки необычного объекта .ssh: %s\n' "$ssh_dir" >&2
       return 1
     fi
   fi
 
   if [[ -e "$authorized_keys" || -L "$authorized_keys" ]]; then
     if [[ ! -f "$authorized_keys" || -L "$authorized_keys" ]]; then
-      printf 'Refusing unusual authorized_keys object: %s\n' "$authorized_keys" >&2
+      printf 'Отказ от обработки необычного объекта authorized_keys: %s\n' "$authorized_keys" >&2
       return 1
     fi
   fi
@@ -67,10 +67,10 @@ proxygpt_fix_tunnel_key_permissions() {
 }
 
 proxygpt_install_raw_authorized_key() {
-  local tunnel_user="${1:?tunnel user is required}"
-  local tunnel_home="${2:?tunnel home is required}"
-  local primary_group="${3:?primary group is required}"
-  local public_key_file="${4:?public key file is required}"
+  local tunnel_user="${1:?требуется tunnel-пользователь}"
+  local tunnel_home="${2:?требуется home tunnel-пользователя}"
+  local primary_group="${3:?требуется основная группа}"
+  local public_key_file="${4:?требуется файл открытого ключа}"
   local authorized_keys="${tunnel_home}/.ssh/authorized_keys"
   local staged_keys="${tunnel_home}/.ssh/.authorized_keys.proxygpt.$$"
   local raw_key
@@ -83,7 +83,7 @@ proxygpt_install_raw_authorized_key() {
 
   IFS= read -r raw_key < "$public_key_file"
   [[ "$raw_key" == ssh-ed25519\ * ]] || {
-    printf 'Staged public key is not raw Ed25519 material\n' >&2
+    printf 'Подготовленный открытый ключ не является чистым ключом Ed25519\n' >&2
     return 1
   }
   wanted_fingerprint="$(ssh-keygen -lf "$public_key_file" | awk '{print $2}')"

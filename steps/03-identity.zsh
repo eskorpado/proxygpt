@@ -1,4 +1,4 @@
-# Phase 3: create and install the dedicated SSH identity.
+# Этап 3: создание и установка отдельной учётной записи SSH.
 
 proxygpt_step_identity() {
   local package_dir
@@ -34,5 +34,5 @@ proxygpt_step_identity() {
     return "$cleanup_status"
   fi
 
-  proxygpt_success "Identity phase completed"
+  proxygpt_success "Этап ключей завершён"
 }

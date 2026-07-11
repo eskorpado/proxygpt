@@ -1,73 +1,76 @@
 # ProxyGPT
 
-ProxyGPT-family launchers run a selected macOS `.app` through a local HTTP proxy backed by
-an SSH tunnel to loopback-only Squid on a Debian or Ubuntu server. Other macOS
-traffic is not reconfigured.
+Семейство лаунчеров ProxyGPT запускает выбранное macOS-приложение `.app`
+через локальный HTTP-прокси, подключённый по SSH-туннелю к Squid на сервере
+Debian или Ubuntu. Squid слушает только loopback-интерфейс. Остальной трафик
+macOS не перенастраивается.
 
-## Install
+## Установка
 
-Run on macOS:
+Запустите на macOS:
 
 ```zsh
 ./install-proxygpt.zsh
 ```
 
-The installer asks for the target application, server, administrative SSH
-account, tunnel account, ports, key path, and app destination. It shows a full
-summary before making changes.
+Установщик запросит целевое приложение, сервер, административную учётную
+запись SSH, пользователя туннеля, порты, путь к ключу и расположение выходного
+приложения. Перед изменениями будет показана полная сводка.
 
-The selected source determines the independent output profile:
+Выбранный источник определяет независимый выходной профиль:
 
-| Source | Output app | CLI |
+| Источник | Выходное приложение | CLI |
 | --- | --- | --- |
 | ChatGPT | `ProxyGPT.app` | `proxygpt` |
 | Codex | `ProxyCodex.app` | `proxycodex` |
 | Claude | `ProxyClaude.app` | `proxyclaude` |
-| Manual name/path | `ProxyLLM.app` | `proxyllm` |
+| Имя или путь, введённые вручную | `ProxyLLM.app` | `proxyllm` |
 
-Each profile has its own data directory, Ed25519 key pair, tunnel account,
-random editable local-port default, control socket, app, CLI, and manifest.
+У каждого профиля свои каталог данных, пара ключей Ed25519, пользователь туннеля,
+редактируемый случайный локальный порт, управляющий сокет, приложение,
+CLI-команда и манифест.
 
-The six phases are:
+Установка состоит из шести этапов:
 
-1. Preflight and confirmation
-2. Squid and restricted sshd policy
-3. Dedicated Ed25519 identity
-4. Runtime and tunnel smoke test
-5. Profile-specific `.app`
-6. Profile-specific `/usr/local/bin/<command>` and endpoint verification
+1. Предварительная проверка и подтверждение
+2. Squid и ограничивающая политика sshd
+3. Отдельная учётная запись Ed25519
+4. Среда выполнения и быстрая проверка туннеля
+5. Профильное приложение `.app`
+6. Профильная команда `/usr/local/bin/<command>` и проверка доступности
 
-The installer intentionally has no rollback or resume mechanism. Server
-configuration is staged and validated before replacement, but a later failure
-does not restore earlier changes. Unhandled remote failures preserve staging
-and the administrative ControlMaster for diagnostics; the idle master expires
-after 300 seconds.
+Установщик намеренно не поддерживает откат и возобновление. Серверная
+конфигурация подготавливается и проверяется до замены, однако ошибка на более
+позднем этапе не восстанавливает предыдущие изменения. При необработанной
+удалённой ошибке временная область и административный ControlMaster сохраняются
+для диагностики; бездействующее master-соединение завершается через 300 секунд.
 
-After installation, launch the generated app in Finder or run its CLI command,
-for example:
+После установки откройте созданное приложение в Finder или выполните его
+CLI-команду, например:
 
 ```zsh
 proxygpt
 ```
 
-The command accepts no application or workspace arguments.
+Команда не принимает аргументы приложения или рабочего пространства.
 
-Source PNG files and ready-to-install macOS ICNS files are stored in
-`assets/`. Each output profile uses its matching ICNS file.
+Исходные PNG и готовые macOS-файлы ICNS находятся в `assets/`. Каждый выходной
+профиль использует соответствующий ICNS-файл.
 
-## Uninstall
+## Удаление
 
-Run:
+Запустите:
 
 ```zsh
 ./uninstall.sh
 ```
 
-The uninstaller first lists profiles with a valid schema-2 manifest. It offers local-only
-cleanup or local cleanup plus deletion of the dedicated tunnel account and its
-home directory. Shared Squid and sshd configuration are always preserved.
+Скрипт удаления сначала показывает профили с корректным манифестом schema 2.
+Можно удалить только локальные компоненты либо локальные компоненты вместе с
+выделенной серверной учётной записью пользователя туннеля и её домашним
+каталогом. Общая конфигурация Squid и sshd всегда сохраняется.
 
-## Local checks
+## Локальные проверки
 
 ```zsh
 ./install-proxygpt.zsh --check
@@ -81,4 +84,4 @@ home directory. Shared Squid and sshd configuration are always preserved.
 ./tests/target-profile-selection.zsh
 ```
 
-These checks do not configure or contact a real server.
+Эти проверки не настраивают реальный сервер и не подключаются к нему.

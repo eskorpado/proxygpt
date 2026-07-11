@@ -43,7 +43,7 @@ else
   phase_status=$?
 fi
 [[ "$phase_status" == 19 ]] || {
-  print -ru2 -- "Expected endpoint status 19, got ${phase_status}"
+  print -ru2 -- "Ожидался код проверяемого адреса 19, получен ${phase_status}"
   exit 1
 }
 events=("${(@f)$(<"$EVENTS_FILE")}")

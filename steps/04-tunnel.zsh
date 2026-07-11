@@ -1,4 +1,4 @@
-# Phase 4: install, start, and verify the local tunnel manager.
+# Этап 4: установка, запуск и проверка локального менеджера туннеля.
 
 proxygpt_step_tunnel() {
   local runtime_command="$(proxygpt_config_get runtime_command)"
@@ -22,7 +22,7 @@ proxygpt_step_tunnel() {
     :
   else
     cleanup_status=$?
-    proxygpt_warn "Could not stop the phase-4 verification tunnel"
+    proxygpt_warn "Не удалось остановить проверочный туннель этапа 4"
   fi
 
   if (( verification_status != 0 )); then
@@ -32,5 +32,5 @@ proxygpt_step_tunnel() {
     return "$cleanup_status"
   fi
 
-  proxygpt_success "Tunnel phase completed"
+  proxygpt_success "Этап туннеля завершён"
 }

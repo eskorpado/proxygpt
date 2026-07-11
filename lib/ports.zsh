@@ -1,4 +1,4 @@
-# TCP port validation and installer-time local conflict handling.
+# Проверка TCP-портов и обработка локальных конфликтов при установке.
 
 proxygpt_port_is_valid() {
   local port="${1-}"
@@ -7,14 +7,14 @@ proxygpt_port_is_valid() {
 }
 
 proxygpt_local_port_listener_details() {
-  local port="${1:?local port is required}"
+  local port="${1:?требуется локальный порт}"
 
   proxygpt_port_is_valid "$port" || return 1
   lsof -nP -iTCP:"$port" -sTCP:LISTEN 2>/dev/null
 }
 
 proxygpt_local_port_is_in_use() {
-  local port="${1:?local port is required}"
+  local port="${1:?требуется локальный порт}"
   local details
 
   if ! details="$(proxygpt_local_port_listener_details "$port")"; then
@@ -35,7 +35,7 @@ proxygpt_random_free_local_port() {
     fi
   done
 
-  proxygpt_die "Could not select a free random local port from 49152-65535"
+  proxygpt_die "Не удалось выбрать свободный случайный локальный порт из диапазона 49152–65535"
   return 1
 }
 
@@ -50,16 +50,16 @@ proxygpt_prompt_local_proxy_port() {
   fi
 
   while true; do
-    proxygpt_prompt_nonempty "Local proxy port" "$default_port"
+    proxygpt_prompt_nonempty "Локальный порт прокси" "$default_port"
     selected_port="$PROXYGPT_REPLY"
 
     if ! proxygpt_port_is_valid "$selected_port"; then
-      proxygpt_warn "Port must be an integer from 1 to 65535"
+      proxygpt_warn "Порт должен быть целым числом от 1 до 65535"
       continue
     fi
 
     if proxygpt_local_port_is_in_use "$selected_port"; then
-      proxygpt_warn "Local port ${selected_port} is already in use"
+      proxygpt_warn "Локальный порт ${selected_port} уже занят"
       details="$(proxygpt_local_port_listener_details "$selected_port")"
       print -ru2 -- "$details"
       default_port="$selected_port"
@@ -69,7 +69,7 @@ proxygpt_prompt_local_proxy_port() {
     proxygpt_config_set local_proxy_port "$selected_port"
     proxygpt_config_set tunnel_control_socket \
       "$(proxygpt_config_get tunnel_control_dir)/$(proxygpt_config_get cli_name)-${selected_port}.sock"
-    proxygpt_success "Local proxy port is available: ${selected_port}"
+    proxygpt_success "Локальный порт прокси свободен: ${selected_port}"
     return 0
   done
 }

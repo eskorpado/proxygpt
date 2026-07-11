@@ -1,7 +1,7 @@
-# Persisted runtime config and executable installation.
+# Сохранение конфигурации среды выполнения и установка исполняемых файлов.
 
 proxygpt_shell_assignment() {
-  local name="${1:?variable name is required}"
+  local name="${1:?требуется имя переменной}"
   local value="${2-}"
 
   [[ "$name" =~ '^[A-Z][A-Z0-9_]*$' ]] || return 1
@@ -15,7 +15,7 @@ proxygpt_write_runtime_config() {
   local temp_file="${config_file}.tmp.$$"
 
   if ! mkdir -p "$config_dir" || ! chmod 700 "$data_root" "$config_dir"; then
-    proxygpt_die "Could not prepare runtime configuration directory: ${config_dir}"
+    proxygpt_die "Не удалось подготовить каталог конфигурации среды выполнения: ${config_dir}"
     return 1
   fi
 
@@ -33,17 +33,17 @@ proxygpt_write_runtime_config() {
     proxygpt_shell_assignment TARGET_APP_EXECUTABLE "$(proxygpt_config_get target_app_executable)"
     proxygpt_shell_assignment PRODUCT_NAME "$(proxygpt_config_get product_name)"
   } > "$temp_file" || {
-    proxygpt_die "Could not write runtime configuration: ${temp_file}"
+    proxygpt_die "Не удалось записать конфигурацию среды выполнения: ${temp_file}"
     return 1
   }
 
   if ! chmod 600 "$temp_file" ||
      ! zsh -n "$temp_file" ||
      ! mv -f "$temp_file" "$config_file"; then
-    proxygpt_die "Runtime configuration validation or installation failed: ${config_file}"
+    proxygpt_die "Проверка или установка конфигурации среды выполнения завершилась ошибкой: ${config_file}"
     return 1
   fi
-  proxygpt_success "Runtime configuration installed: ${config_file}"
+  proxygpt_success "Конфигурация среды выполнения установлена: ${config_file}"
 }
 
 proxygpt_write_install_manifest() {
@@ -53,7 +53,7 @@ proxygpt_write_install_manifest() {
   local temp_file="${manifest}.tmp.$$"
 
   if ! mkdir -p "$config_dir" || ! chmod 700 "$data_root" "$config_dir"; then
-    proxygpt_die "Could not prepare installation manifest directory: ${config_dir}"
+    proxygpt_die "Не удалось подготовить каталог манифеста установки: ${config_dir}"
     return 1
   fi
 
@@ -77,18 +77,18 @@ proxygpt_write_install_manifest() {
     proxygpt_shell_assignment CLI_LINK "$(proxygpt_config_get cli_link_path)"
     proxygpt_shell_assignment APP_PATH "$(proxygpt_config_get app_path)"
   } > "$temp_file" || {
-    proxygpt_die "Could not write installation manifest: ${temp_file}"
+    proxygpt_die "Не удалось записать манифест установки: ${temp_file}"
     return 1
   }
 
   if ! chmod 600 "$temp_file" ||
      ! zsh -n "$temp_file" ||
      ! mv -f "$temp_file" "$manifest"; then
-    proxygpt_die "Installation manifest validation or installation failed: ${manifest}"
+    proxygpt_die "Проверка или установка манифеста завершилась ошибкой: ${manifest}"
     return 1
   fi
 
-  proxygpt_success "Installation manifest installed: ${manifest}"
+  proxygpt_success "Манифест установки сохранён: ${manifest}"
 }
 
 proxygpt_install_runtime_files() {
@@ -100,7 +100,7 @@ proxygpt_install_runtime_files() {
   local tunnel_temp="${tunnel_command}.tmp.$$"
 
   if ! mkdir -p "$bin_dir" || ! chmod 700 "$data_root" "$bin_dir"; then
-    proxygpt_die "Could not prepare runtime executable directory: ${bin_dir}"
+    proxygpt_die "Не удалось подготовить каталог команд среды выполнения: ${bin_dir}"
     return 1
   fi
 
@@ -111,11 +111,11 @@ proxygpt_install_runtime_files() {
      ! zsh -n "$tunnel_temp" ||
      ! mv -f "$runtime_temp" "$runtime_command" ||
      ! mv -f "$tunnel_temp" "$tunnel_command"; then
-    proxygpt_die "Runtime script validation or installation failed"
+    proxygpt_die "Проверка или установка скриптов среды выполнения завершилась ошибкой"
     return 1
   fi
 
   proxygpt_write_runtime_config || return 1
   proxygpt_write_install_manifest || return 1
-  proxygpt_success "$(proxygpt_config_get product_name) runtime scripts installed"
+  proxygpt_success "Скрипты среды выполнения $(proxygpt_config_get product_name) установлены"
 }

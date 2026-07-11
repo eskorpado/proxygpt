@@ -1,9 +1,9 @@
-# Shared interactive input helpers. Results are returned in PROXYGPT_REPLY.
+# Общие функции интерактивного ввода. Результат возвращается в PROXYGPT_REPLY.
 
 typeset -g PROXYGPT_REPLY=""
 
 proxygpt_prompt_nonempty() {
-  local label="${1:?prompt label is required}"
+  local label="${1:?требуется название запроса}"
   local default_value="${2-}"
   local answer
 
@@ -15,7 +15,7 @@ proxygpt_prompt_nonempty() {
     fi
 
     if ! IFS= read -r answer; then
-      proxygpt_die "Input ended while waiting for: ${label}"
+      proxygpt_die "Ввод завершился во время ожидания значения: ${label}"
       return 1
     fi
 
@@ -28,19 +28,19 @@ proxygpt_prompt_nonempty() {
       return 0
     fi
 
-    proxygpt_warn "A value is required"
+    proxygpt_warn "Необходимо ввести значение"
   done
 }
 
 proxygpt_prompt_menu() {
-  local title="${1:?menu title is required}"
+  local title="${1:?требуется заголовок меню}"
   shift
   local -a options=("$@")
   local answer
   local index
 
   if (( ${#options} == 0 )); then
-    proxygpt_die "Menu has no options: ${title}"
+    proxygpt_die "В меню нет вариантов: ${title}"
     return 1
   fi
 
@@ -49,10 +49,10 @@ proxygpt_prompt_menu() {
     for (( index = 1; index <= ${#options}; index++ )); do
       print -r -- "  ${index}) ${options[index]}"
     done
-    print -nru2 -- "Select [1]: "
+    print -nru2 -- "Выбор [1]: "
 
     if ! IFS= read -r answer; then
-      proxygpt_die "Input ended while waiting for: ${title}"
+      proxygpt_die "Ввод завершился во время ожидания выбора: ${title}"
       return 1
     fi
 
@@ -62,12 +62,12 @@ proxygpt_prompt_menu() {
       return 0
     fi
 
-    proxygpt_warn "Enter a number from 1 to ${#options}"
+    proxygpt_warn "Введите число от 1 до ${#options}"
   done
 }
 
 proxygpt_prompt_yes_no() {
-  local label="${1:?prompt label is required}"
+  local label="${1:?требуется название запроса}"
   local default_answer="${2:-yes}"
   local hint
   local answer
@@ -77,14 +77,14 @@ proxygpt_prompt_yes_no() {
   elif [[ "$default_answer" == "no" ]]; then
     hint="y/N"
   else
-    proxygpt_die "Invalid yes/no default: ${default_answer}"
+    proxygpt_die "Недопустимое значение по умолчанию для да/нет: ${default_answer}"
     return 1
   fi
 
   while true; do
     print -nru2 -- "${label} [${hint}]: "
     if ! IFS= read -r answer; then
-      proxygpt_die "Input ended while waiting for: ${label}"
+      proxygpt_die "Ввод завершился во время ожидания ответа: ${label}"
       return 1
     fi
 
@@ -104,7 +104,7 @@ proxygpt_prompt_yes_no() {
         return 0
         ;;
       *)
-        proxygpt_warn "Enter yes or no"
+        proxygpt_warn "Введите y/yes или n/no"
         ;;
     esac
   done

@@ -14,7 +14,7 @@ source "${PROJECT_ROOT}/steps/05-app.zsh"
 proxygpt_step_app
 
 [[ "${(j: :)events}" == "install register success" ]] || {
-  print -ru2 -- "Unexpected app phase lifecycle: ${(j: :)events}"
+  print -ru2 -- "Неожиданный жизненный цикл этапа приложения: ${(j: :)events}"
   exit 1
 }
 

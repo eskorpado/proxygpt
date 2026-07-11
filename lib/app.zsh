@@ -1,7 +1,7 @@
-# Target macOS application discovery and validation.
+# Поиск и проверка целевого приложения macOS.
 
 proxygpt_expand_user_path() {
-  local path="${1:?path is required}"
+  local path="${1:?требуется путь}"
 
   if [[ "$path" == "~" ]]; then
     path="$HOME"
@@ -13,7 +13,7 @@ proxygpt_expand_user_path() {
 }
 
 proxygpt_find_target_app() {
-  local requested="${1:?application name or path is required}"
+  local requested="${1:?требуется имя или путь приложения}"
   local candidate
   local app_name
   local -a candidates
@@ -42,27 +42,27 @@ proxygpt_find_target_app() {
 }
 
 proxygpt_read_bundle_executable() {
-  local bundle="${1:?application bundle path is required}"
+  local bundle="${1:?требуется путь приложения}"
   local plist="${bundle}/Contents/Info.plist"
   local executable
 
   if [[ ! -f "$plist" ]]; then
-    proxygpt_die "Application bundle has no Contents/Info.plist: ${bundle}"
+    proxygpt_die "В приложении нет Contents/Info.plist: ${bundle}"
     return 1
   fi
 
   if ! plutil -lint "$plist" >/dev/null; then
-    proxygpt_die "Application Info.plist is invalid: ${plist}"
+    proxygpt_die "Некорректный Info.plist приложения: ${plist}"
     return 1
   fi
 
   if ! executable="$(/usr/libexec/PlistBuddy -c 'Print :CFBundleExecutable' "$plist" 2>/dev/null)"; then
-    proxygpt_die "CFBundleExecutable is missing from: ${plist}"
+    proxygpt_die "В файле отсутствует CFBundleExecutable: ${plist}"
     return 1
   fi
 
   if [[ -z "$executable" ]]; then
-    proxygpt_die "CFBundleExecutable is empty in: ${plist}"
+    proxygpt_die "В файле задан пустой CFBundleExecutable: ${plist}"
     return 1
   fi
 
@@ -70,17 +70,17 @@ proxygpt_read_bundle_executable() {
 }
 
 proxygpt_validate_target_app() {
-  local bundle="${1:?application bundle path is required}"
+  local bundle="${1:?требуется путь приложения}"
   local executable
   local executable_path
 
   if [[ ! -d "$bundle" ]]; then
-    proxygpt_die "Application bundle does not exist: ${bundle}"
+    proxygpt_die "Приложение не существует: ${bundle}"
     return 1
   fi
 
   if [[ "$bundle" != *.app ]]; then
-    proxygpt_die "Target must be a macOS .app bundle: ${bundle}"
+    proxygpt_die "Цель должна быть приложением macOS .app: ${bundle}"
     return 1
   fi
 
@@ -90,7 +90,7 @@ proxygpt_validate_target_app() {
 
   executable_path="${bundle}/Contents/MacOS/${executable}"
   if [[ ! -x "$executable_path" ]]; then
-    proxygpt_die "Bundle executable is missing or not executable: ${executable_path}"
+    proxygpt_die "Исполняемый файл приложения отсутствует или недоступен: ${executable_path}"
     return 1
   fi
 
@@ -98,8 +98,8 @@ proxygpt_validate_target_app() {
 }
 
 proxygpt_configure_target_app() {
-  local requested="${1:?application name or path is required}"
-  local profile_id="${2:?output profile id is required}"
+  local requested="${1:?требуется имя или путь приложения}"
+  local profile_id="${2:?требуется идентификатор выходного профиля}"
   local bundle
   local executable_path
 
@@ -139,8 +139,8 @@ proxygpt_prompt_target_app() {
   done
 
   if (( ${#known_bundles} > 0 )); then
-    menu_options+=("Other application name or full .app path")
-    proxygpt_prompt_menu "Target application:" "${menu_options[@]}"
+    menu_options+=("Другое имя приложения или полный путь к .app")
+    proxygpt_prompt_menu "Целевое приложение:" "${menu_options[@]}"
     selection="$PROXYGPT_REPLY"
 
     if (( selection <= ${#known_bundles} )); then
@@ -150,14 +150,14 @@ proxygpt_prompt_target_app() {
   fi
 
   while true; do
-    proxygpt_prompt_nonempty "Application name or full .app path"
+    proxygpt_prompt_nonempty "Имя приложения или полный путь к .app"
     requested="$PROXYGPT_REPLY"
 
     if proxygpt_configure_target_app "$requested" llm; then
       return 0
     fi
 
-    proxygpt_warn "Application was not found or is not a valid macOS app bundle"
+    proxygpt_warn "Приложение не найдено или не является корректным macOS .app"
   done
 }
 

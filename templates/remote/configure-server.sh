@@ -7,8 +7,8 @@ readonly STAGE_DIR="$(cd -- "$(dirname -- "$0")" && pwd -P)"
 readonly SETTINGS_FILE="${STAGE_DIR}/settings.sh"
 readonly COMMON_FILE="${STAGE_DIR}/server-common.sh"
 
-[[ "$EUID" -eq 0 ]] || { printf 'Server script must run as root\n' >&2; exit 1; }
-[[ -r "$SETTINGS_FILE" && -r "$COMMON_FILE" ]] || { printf 'Incomplete server package\n' >&2; exit 1; }
+[[ "$EUID" -eq 0 ]] || { printf 'Серверный скрипт должен выполняться от root\n' >&2; exit 1; }
+[[ -r "$SETTINGS_FILE" && -r "$COMMON_FILE" ]] || { printf 'Неполный серверный пакет\n' >&2; exit 1; }
 source "$SETTINGS_FILE"
 source "$COMMON_FILE"
 
@@ -37,7 +37,7 @@ trap cleanup_temporary_files EXIT
 
 prompt_replace() {
   local label="$1" choice
-  printf '%s\n  1) Replace\n  2) Abort\nSelect: ' "$label" >/dev/tty
+  printf '%s\n  1) Заменить\n  2) Прервать\nВыбор: ' "$label" >/dev/tty
   IFS= read -r choice </dev/tty
   [[ "$choice" == 1 ]]
 }
@@ -46,7 +46,7 @@ listener_details="$(ss -H -ltnp "sport = :${REMOTE_PORT}" || true)"
 if [[ -n "$listener_details" ]]; then
   while IFS= read -r line; do
     [[ "$line" == *'"squid"'* ]] || {
-      printf 'Remote port %s is owned by another or unknown process:\n%s\n' "$REMOTE_PORT" "$listener_details" >&2
+      printf 'Удалённый порт %s занят другим или неизвестным процессом:\n%s\n' "$REMOTE_PORT" "$listener_details" >&2
       exit 42
     }
   done <<< "$listener_details"
@@ -57,7 +57,7 @@ if id "$TUNNEL_USER" >/dev/null 2>&1; then
   shell="$(getent passwd "$TUNNEL_USER" | cut -d: -f7)"
   password_state="$(passwd -S "$TUNNEL_USER" | awk '{print $2}')"
   if ! proxygpt_existing_tunnel_user_is_compatible "$groups" "$shell" "$password_state"; then
-    printf 'Existing tunnel username is incompatible: user=%s groups=%s shell=%s password=%s\n' \
+    printf 'Существующий пользователь туннеля несовместим: пользователь=%s группы=%s shell=%s пароль=%s\n' \
       "$TUNNEL_USER" "$groups" "$shell" "$password_state" >&2
     exit 43
   fi
@@ -67,15 +67,15 @@ else
 fi
 
 source /etc/os-release
-case "${ID:-}" in debian|ubuntu) ;; *) printf 'Unsupported server OS: %s\n' "${ID:-unknown}" >&2; exit 1;; esac
+case "${ID:-}" in debian|ubuntu) ;; *) printf 'Неподдерживаемая ОС сервера: %s\n' "${ID:-неизвестно}" >&2; exit 1;; esac
 proxygpt_sshd_main_includes_dropins "$SSHD_MAIN" || {
-  printf 'Global Include for /etc/ssh/sshd_config.d/*.conf is missing\n' >&2
+  printf 'Отсутствует глобальный Include для /etc/ssh/sshd_config.d/*.conf\n' >&2
   exit 1
 }
 
 if command -v squid >/dev/null 2>&1; then
   squid_preexisted=1
-  prompt_replace 'Existing Squid installation detected.' || exit 1
+  prompt_replace 'Обнаружена существующая установка Squid.' || exit 1
 else
   squid_preexisted=0
   apt-get update
@@ -102,10 +102,10 @@ systemctl enable squid.service
 systemctl restart squid.service
 
 final_listener="$(ss -H -ltnp "sport = :${REMOTE_PORT}" || true)"
-[[ -n "$final_listener" ]] || { printf 'Squid listener is absent\n' >&2; exit 1; }
+[[ -n "$final_listener" ]] || { printf 'Процесс прослушивания Squid отсутствует\n' >&2; exit 1; }
 while IFS= read -r line; do
   [[ "$line" == *"127.0.0.1:${REMOTE_PORT}"* && "$line" == *'"squid"'* ]] || {
-    printf 'Unsafe final Squid listener:\n%s\n' "$final_listener" >&2; exit 1;
+    printf 'Небезопасный итоговый процесс прослушивания Squid:\n%s\n' "$final_listener" >&2; exit 1;
   }
 done <<< "$final_listener"
 
@@ -113,7 +113,7 @@ if getent group codex-tunnel >/dev/null; then
   members="$(getent group codex-tunnel | cut -d: -f4)"
   current_port="$(awk '/^[[:space:]]*PermitOpen[[:space:]]+127\.0\.0\.1:/ {sub(/.*:/, ""); print; exit}' "$SSHD_DROPIN" 2>/dev/null || true)"
   if [[ -n "$members" && -n "$current_port" && "$current_port" != "$REMOTE_PORT" ]]; then
-    printf 'WARNING: updating shared PermitOpen for group members: %s\n' "$members" >&2
+    printf 'ПРЕДУПРЕЖДЕНИЕ: общий PermitOpen обновляется для участников группы: %s\n' "$members" >&2
   fi
 fi
 
@@ -121,7 +121,7 @@ if [[ -e "$SSHD_DROPIN" || -L "$SSHD_DROPIN" ]]; then
   first_line="$(head -n 1 "$SSHD_DROPIN" 2>/dev/null || true)"
   if [[ "$first_line" != '# Managed by ProxyGPT. Manual changes may be replaced by the installer.' ]]; then
     cp -a "$SSHD_DROPIN" "${SSHD_DROPIN}.proxygpt-backup-${TIMESTAMP}"
-    prompt_replace "Foreign sshd drop-in detected at ${SSHD_DROPIN}." || exit 1
+    prompt_replace "По пути ${SSHD_DROPIN} обнаружен чужой drop-in sshd." || exit 1
     rm -rf "$SSHD_DROPIN"
   fi
 fi
@@ -137,10 +137,10 @@ sshd -t
 effective="$(sshd -T -C "user=${TUNNEL_USER},host=${SERVER_HOST},addr=127.0.0.1")"
 authorized_files="$(awk '$1=="authorizedkeysfile" {$1=""; sub(/^ /, ""); print; exit}' <<< "$effective")"
 if ! proxygpt_authorized_keys_files_are_compatible "$authorized_files"; then
-  prompt_replace 'Effective AuthorizedKeysFile lacks .ssh/authorized_keys. Apply global policy for all SSH users?' || exit 1
+  prompt_replace 'В эффективном AuthorizedKeysFile отсутствует .ssh/authorized_keys. Применить глобальную политику для всех пользователей SSH?' || exit 1
   awk '
-    /# >>> ProxyGPT AuthorizedKeysFile >>>/ { skip=1; next }
-    /# <<< ProxyGPT AuthorizedKeysFile <<</ { skip=0; next }
+    /# >>> ProxyGPT(: глобальный)? AuthorizedKeysFile >>>/ { skip=1; next }
+    /# <<< ProxyGPT(: глобальный)? AuthorizedKeysFile <<</ { skip=0; next }
     !skip { print }
   ' "$SSHD_MAIN" > "$SSHD_BODY_TEMP"
   { cat "$AUTH_KEYS_SNIPPET"; cat "$SSHD_BODY_TEMP"; } > "$SSHD_MAIN_TEMP"
@@ -166,4 +166,4 @@ grep -Fxq 'allowagentforwarding no' <<< "$effective"
 grep -Fxq 'x11forwarding no' <<< "$effective"
 grep -Fxq 'forcecommand none' <<< "$effective"
 
-printf 'Server configuration completed\n'
+printf 'Настройка сервера завершена\n'

@@ -1,10 +1,10 @@
-# Plain-text installer logging. Logging remains inactive until initialization.
+# Текстовый журнал установщика. До инициализации запись отключена.
 
 typeset -g PROXYGPT_LOG_FILE=""
 typeset -g PROXYGPT_CURRENT_PHASE="Bootstrap"
 
 proxygpt_log() {
-  local level="${1:?log level is required}"
+  local level="${1:?требуется уровень журнала}"
   shift
   local message="$*"
   local timestamp
@@ -30,5 +30,5 @@ proxygpt_log_init() {
   (umask 077; : > "$PROXYGPT_LOG_FILE")
   proxygpt_config_set installer_log "$PROXYGPT_LOG_FILE"
 
-  proxygpt_log INFO "Installer log initialized"
+  proxygpt_log INFO "Журнал установщика инициализирован"
 }

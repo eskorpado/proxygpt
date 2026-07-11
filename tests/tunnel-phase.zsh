@@ -25,7 +25,7 @@ source "${PROJECT_ROOT}/steps/04-tunnel.zsh"
 PROXYGPT_TEST_EVENTS="$EVENTS_FILE" proxygpt_step_tunnel
 typeset -a events=("${(@f)$(<"$EVENTS_FILE")}")
 [[ "${(j: :)events}" == "start stop" ]] || {
-  print -ru2 -- "Unexpected tunnel smoke lifecycle: ${(j: :)events}"
+  print -ru2 -- "Неожиданный жизненный цикл быстрой проверки туннеля: ${(j: :)events}"
   exit 1
 }
 
@@ -38,12 +38,12 @@ else
   phase_status=$?
 fi
 [[ "$phase_status" == 17 ]] || {
-  print -ru2 -- "Expected listener status 17, got ${phase_status}"
+  print -ru2 -- "Ожидался код процесса прослушивания 17, получен ${phase_status}"
   exit 1
 }
 events=("${(@f)$(<"$EVENTS_FILE")}")
 [[ "${(j: :)events}" == "start stop" ]] || {
-  print -ru2 -- "Failure path did not stop tunnel: ${(j: :)events}"
+  print -ru2 -- "После ошибки туннель не был остановлен: ${(j: :)events}"
   exit 1
 }
 

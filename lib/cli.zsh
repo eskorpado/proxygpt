@@ -1,7 +1,7 @@
-# Installation of the user-facing proxygpt command symlink.
+# Установка пользовательской символьной ссылки CLI-команды.
 
 proxygpt_cli_run_for_directory() {
-  local directory="${1:?directory is required}"
+  local directory="${1:?требуется каталог}"
   shift
 
   if [[ -w "$directory" ]]; then
@@ -12,7 +12,7 @@ proxygpt_cli_run_for_directory() {
 }
 
 proxygpt_cli_ensure_directory() {
-  local directory="${1:?directory is required}"
+  local directory="${1:?требуется каталог}"
   local parent="${directory:h}"
 
   if [[ -d "$directory" ]]; then
@@ -20,7 +20,7 @@ proxygpt_cli_ensure_directory() {
   fi
 
   if [[ ! -d "$parent" ]]; then
-    proxygpt_die "Parent directory does not exist: ${parent}"
+    proxygpt_die "Родительский каталог не существует: ${parent}"
     return 1
   fi
 
@@ -32,8 +32,8 @@ proxygpt_cli_ensure_directory() {
 }
 
 proxygpt_cli_link_matches() {
-  local link_path="${1:?link path is required}"
-  local expected_target="${2:?expected target is required}"
+  local link_path="${1:?требуется путь ссылки}"
+  local expected_target="${2:?требуется ожидаемая цель}"
   local current_target
 
   [[ -L "$link_path" ]] || return 1
@@ -52,30 +52,30 @@ proxygpt_install_cli_link() {
   local link_directory="${link_path:h}"
 
   if [[ ! -x "$target" ]]; then
-    proxygpt_die "Runtime command is missing or not executable: ${target}"
+    proxygpt_die "Команда среды выполнения отсутствует или недоступна: ${target}"
     return 1
   fi
 
   proxygpt_cli_ensure_directory "$link_directory"
 
   if proxygpt_cli_link_matches "$link_path" "$target"; then
-    proxygpt_success "Command link is already installed: ${link_path}"
+    proxygpt_success "Ссылка команды уже установлена: ${link_path}"
     return 0
   fi
 
   if [[ -e "$link_path" || -L "$link_path" ]]; then
     if [[ -d "$link_path" && ! -L "$link_path" ]]; then
-      proxygpt_die "Cannot replace a directory with the command link: ${link_path}"
+      proxygpt_die "Нельзя заменить каталог ссылкой команды: ${link_path}"
       return 1
     fi
 
     proxygpt_prompt_menu \
-      "Another file already exists at ${link_path}:" \
-      "Replace it" \
-      "Abort"
+      "По пути ${link_path} уже находится другой файл:" \
+      "Заменить" \
+      "Прервать"
 
     if [[ "$PROXYGPT_REPLY" != "1" ]]; then
-      proxygpt_die "Command link installation aborted"
+      proxygpt_die "Установка ссылки команды прервана"
       return 1
     fi
 
@@ -85,9 +85,9 @@ proxygpt_install_cli_link() {
   proxygpt_cli_run_for_directory "$link_directory" ln -s "$target" "$link_path"
 
   if ! proxygpt_cli_link_matches "$link_path" "$target"; then
-    proxygpt_die "Command link validation failed: ${link_path}"
+    proxygpt_die "Проверка ссылки команды завершилась ошибкой: ${link_path}"
     return 1
   fi
 
-  proxygpt_success "Command installed: ${link_path}"
+  proxygpt_success "Команда установлена: ${link_path}"
 }

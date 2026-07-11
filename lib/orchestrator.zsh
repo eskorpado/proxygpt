@@ -1,4 +1,4 @@
-# Phase registry and top-level command handling.
+# Реестр этапов и обработка аргументов верхнего уровня.
 
 typeset -ga PROXYGPT_STEP_FUNCTIONS=(
   proxygpt_step_preflight
@@ -10,23 +10,23 @@ typeset -ga PROXYGPT_STEP_FUNCTIONS=(
 )
 
 typeset -ga PROXYGPT_STEP_LABELS=(
-  Preflight
-  Server
-  Identity
-  Tunnel
-  App
-  Integration
+  Проверка
+  Сервер
+  Ключи
+  Туннель
+  Приложение
+  Интеграция
 )
 
 proxygpt_usage() {
-  print -r -- "ProxyGPT installer ${PROXYGPT_VERSION}"
+  print -r -- "Установщик ProxyGPT ${PROXYGPT_VERSION}"
   print
-  print -r -- "Usage: ${PROXYGPT_PROGRAM} [--help | --list-steps | --check]"
+  print -r -- "Использование: ${PROXYGPT_PROGRAM} [--help | --list-steps | --check]"
   print
-  print -r -- "Without arguments, runs the interactive installer."
-  print -r -- "  --help        Show this help"
-  print -r -- "  --list-steps  Print the installer phases"
-  print -r -- "  --check       Validate that all phase functions are loaded"
+  print -r -- "Без аргументов запускается интерактивная установка."
+  print -r -- "  --help        Показать эту справку"
+  print -r -- "  --list-steps  Показать этапы установки"
+  print -r -- "  --check       Проверить загрузку функций всех этапов"
 }
 
 proxygpt_list_steps() {
@@ -43,11 +43,11 @@ proxygpt_validate_steps() {
 
   for step in "${PROXYGPT_STEP_FUNCTIONS[@]}"; do
     if (( ! ${+functions[$step]} )); then
-      proxygpt_die "Required phase function is not loaded: ${step}"
+      proxygpt_die "Не загружена обязательная функция этапа: ${step}"
     fi
   done
 
-  proxygpt_success "All ${#PROXYGPT_STEP_FUNCTIONS} phase functions are loaded"
+  proxygpt_success "Загружены функции всех этапов: ${#PROXYGPT_STEP_FUNCTIONS}"
 }
 
 proxygpt_run_steps() {
@@ -87,7 +87,7 @@ proxygpt_main() {
       proxygpt_validate_steps
       ;;
     *)
-      proxygpt_error "Unknown option: $1"
+      proxygpt_error "Неизвестный параметр: $1"
       proxygpt_usage >&2
       return 64
       ;;

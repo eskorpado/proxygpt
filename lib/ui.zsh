@@ -1,4 +1,4 @@
-# Shared terminal output helpers.
+# Общие функции вывода в терминал.
 
 proxygpt_info() {
   print -r -- "  $*"

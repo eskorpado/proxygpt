@@ -1,10 +1,10 @@
-# Fixed output profile metadata shared by installer and uninstaller.
+# Фиксированные метаданные профилей для установщика и скрипта удаления.
 
 typeset -ga PROXYGPT_PROFILE_IDS=(chatgpt codex claude llm)
 
 proxygpt_profile_field() {
-  local profile_id="${1:?profile id is required}"
-  local field="${2:?profile field is required}"
+  local profile_id="${1:?требуется идентификатор профиля}"
+  local field="${2:?требуется поле профиля}"
 
   case "${profile_id}:${field}" in
     chatgpt:product) print -r -- "ProxyGPT" ;;

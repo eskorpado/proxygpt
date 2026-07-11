@@ -1,4 +1,4 @@
-# Phase 2: configure Squid and the restricted sshd policy remotely.
+# Этап 2: удалённая настройка Squid и ограничивающей политики sshd.
 
 proxygpt_step_server() {
   local exit_code
@@ -21,20 +21,20 @@ proxygpt_step_server() {
     case "$exit_code" in
       0)
         proxygpt_remove_local_server_package || return 1
-        proxygpt_success "Server phase completed"
+        proxygpt_success "Серверный этап завершён"
         return 0
         ;;
       42)
         proxygpt_remote_remove_stage || return 1
         proxygpt_remove_local_server_package || return 1
-        proxygpt_warn "Choose another remote Squid port"
-        proxygpt_prompt_port_config "Remote Squid port" remote_proxy_port || return 1
+        proxygpt_warn "Выберите другой удалённый порт Squid"
+        proxygpt_prompt_port_config "Удалённый порт Squid" remote_proxy_port || return 1
         proxygpt_write_install_manifest || return 1
         ;;
       43)
         proxygpt_remote_remove_stage || return 1
         proxygpt_remove_local_server_package || return 1
-        proxygpt_warn "Choose another tunnel username"
+        proxygpt_warn "Выберите другое имя пользователя туннеля"
         proxygpt_prompt_tunnel_user || return 1
         proxygpt_write_install_manifest || return 1
         ;;

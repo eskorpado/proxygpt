@@ -6,11 +6,11 @@ setopt ERR_EXIT NO_UNSET PIPE_FAIL
 typeset -r SCRIPT_DIR="${0:A:h}"
 typeset -r CONFIG_FILE="${SCRIPT_DIR:h}/config/proxygpt.conf"
 
-[[ -r "$CONFIG_FILE" ]] || { print -ru2 -- "Missing config: ${CONFIG_FILE}"; exit 1; }
+[[ -r "$CONFIG_FILE" ]] || { print -ru2 -- "Отсутствует конфигурация: ${CONFIG_FILE}"; exit 1; }
 source "$CONFIG_FILE"
 
 for name in SERVER SERVER_USER SSH_PORT SSH_KEY LOCAL_PORT REMOTE_PORT CONTROL_DIR CONTROL_SOCKET SSH_HOST_KEY_POLICY PRODUCT_NAME; do
-  [[ -n "${(P)name:-}" ]] || { print -ru2 -- "Missing config value: ${name}"; exit 1; }
+  [[ -n "${(P)name:-}" ]] || { print -ru2 -- "В конфигурации отсутствует значение: ${name}"; exit 1; }
 done
 
 typeset -r TARGET="${SERVER_USER}@${SERVER}"
@@ -30,7 +30,7 @@ port_is_occupied() {
 }
 
 show_conflict() {
-  print -ru2 -- "Local port ${LOCAL_PORT} is occupied:"
+  print -ru2 -- "Локальный порт ${LOCAL_PORT} занят:"
   listener_details >&2 || true
 }
 
@@ -38,23 +38,23 @@ remove_confirmed_stale_socket() {
   if [[ -e "$CONTROL_SOCKET" || -L "$CONTROL_SOCKET" ]]; then
     if port_is_occupied; then
       show_conflict
-      print -ru2 -- "Control socket was preserved because the port is occupied"
+      print -ru2 -- "Управляющий сокет сохранён, поскольку порт занят"
       return 1
     fi
     rm -f "$CONTROL_SOCKET"
-    print -r -- "Removed confirmed stale control socket: ${CONTROL_SOCKET}"
+    print -r -- "Удалён подтверждённый устаревший управляющий сокет: ${CONTROL_SOCKET}"
   fi
 }
 
 start_tunnel() {
   if master_check; then
-    print -r -- "${PRODUCT_NAME} tunnel is already running"
+    print -r -- "Туннель ${PRODUCT_NAME} уже запущен"
     return 0
   fi
 
   if port_is_occupied; then
     show_conflict
-    print -ru2 -- "Refusing to remove the control socket or kill the listener"
+    print -ru2 -- "Отказ от удаления управляющего сокета или завершения процесса прослушивания"
     return 1
   fi
 
@@ -79,40 +79,40 @@ start_tunnel() {
     -L "127.0.0.1:${LOCAL_PORT}:127.0.0.1:${REMOTE_PORT}" \
     "$TARGET"
 
-  master_check || { print -ru2 -- "SSH master health check failed"; return 1; }
-  port_is_occupied || { print -ru2 -- "Local proxy listener did not appear"; return 1; }
-  print -r -- "${PRODUCT_NAME} tunnel started"
+  master_check || { print -ru2 -- "SSH master не прошёл проверку"; return 1; }
+  port_is_occupied || { print -ru2 -- "Локальный процесс прослушивания прокси не появился"; return 1; }
+  print -r -- "Туннель ${PRODUCT_NAME} запущен"
 }
 
 stop_tunnel() {
   if master_check; then
     ssh -S "$CONTROL_SOCKET" -O exit -p "$SSH_PORT" "$TARGET" >/dev/null
-    print -r -- "${PRODUCT_NAME} tunnel stopped"
+    print -r -- "Туннель ${PRODUCT_NAME} остановлен"
     return 0
   fi
 
   if port_is_occupied; then
     show_conflict
-    print -ru2 -- "Master control is unavailable; refusing to kill the listener"
+    print -ru2 -- "Управление master-соединением недоступно; отказ от завершения процесса прослушивания"
     return 1
   fi
 
   remove_confirmed_stale_socket
-  print -r -- "${PRODUCT_NAME} tunnel is not running"
+  print -r -- "Туннель ${PRODUCT_NAME} не запущен"
 }
 
 show_status() {
-  print -r -- "Control socket: ${CONTROL_SOCKET}"
+  print -r -- "Управляющий сокет: ${CONTROL_SOCKET}"
   if master_check; then
-    print -r -- "Master: healthy"
+    print -r -- "Master-соединение: исправно"
   else
-    print -r -- "Master: unavailable"
+    print -r -- "Master-соединение: недоступно"
   fi
   if port_is_occupied; then
-    print -r -- "Listener: present on 127.0.0.1:${LOCAL_PORT}"
+    print -r -- "Процесс прослушивания: работает на 127.0.0.1:${LOCAL_PORT}"
     listener_details || true
   else
-    print -r -- "Listener: absent"
+    print -r -- "Процесс прослушивания: отсутствует"
   fi
 }
 
@@ -120,5 +120,5 @@ case "${1:-}" in
   start) start_tunnel ;;
   stop) stop_tunnel ;;
   status) show_status ;;
-  *) print -ru2 -- "Usage: ${0:t} {start|stop|status}"; exit 64 ;;
+  *) print -ru2 -- "Использование: ${0:t} {start|stop|status}"; exit 64 ;;
 esac

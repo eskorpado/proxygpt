@@ -1,4 +1,4 @@
-# Phase 6: install the proxygpt command, verify, and print launch instructions.
+# Этап 6: установка CLI-команды, проверка и вывод инструкций запуска.
 
 proxygpt_step_integration() {
   local runtime_command="$(proxygpt_config_get runtime_command)"
@@ -25,7 +25,7 @@ proxygpt_step_integration() {
     :
   else
     cleanup_status=$?
-    proxygpt_warn "Could not stop the final verification tunnel"
+    proxygpt_warn "Не удалось остановить финальный проверочный туннель"
   fi
 
   if (( verification_status != 0 )); then
@@ -35,8 +35,8 @@ proxygpt_step_integration() {
     return "$cleanup_status"
   fi
 
-  proxygpt_success "$(proxygpt_config_get product_name) installation completed"
+  proxygpt_success "Установка $(proxygpt_config_get product_name) завершена"
   print
-  print -r -- "Launch from Finder: ${app_path}"
-  print -r -- "Launch from Terminal: ${cli_link}"
+  print -r -- "Запуск из Finder: ${app_path}"
+  print -r -- "Запуск из Terminal: ${cli_link}"
 }

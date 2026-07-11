@@ -1,4 +1,4 @@
-# Remote server configuration helpers.
+# Функции настройки удалённого сервера.
 
 typeset -gr PROXYGPT_REMOTE_PORT_CONFLICT_EXIT=42
 typeset -gr PROXYGPT_TUNNEL_USER_CONFLICT_EXIT=43
@@ -51,7 +51,7 @@ proxygpt_existing_tunnel_user_is_compatible() {
 }
 
 proxygpt_classify_sshd_dropin() {
-  local dropin_path="${1:?sshd drop-in path is required}"
+  local dropin_path="${1:?требуется путь drop-in sshd}"
   local first_line
 
   if [[ ! -e "$dropin_path" && ! -L "$dropin_path" ]]; then
@@ -114,14 +114,14 @@ proxygpt_sshd_main_includes_dropins() {
   local config_text
 
   if [[ ! -r "$main_config" ]]; then
-    proxygpt_die "Cannot read the main sshd configuration: ${main_config}"
+    proxygpt_die "Не удалось прочитать основную конфигурацию sshd: ${main_config}"
     return 1
   fi
 
   config_text="$(<"$main_config")"
   if ! proxygpt_sshd_config_text_includes_dropins "$config_text"; then
     proxygpt_die \
-      "Global Include for /etc/ssh/sshd_config.d/*.conf is missing; configure it manually and rerun"
+      "Отсутствует глобальный Include для /etc/ssh/sshd_config.d/*.conf; настройте его вручную и повторите запуск"
     return 1
   fi
 }
@@ -139,17 +139,17 @@ proxygpt_authorized_keys_files_are_compatible() {
 }
 
 proxygpt_render_squid_config() {
-  local remote_port="${1:?remote Squid port is required}"
+  local remote_port="${1:?требуется удалённый порт Squid}"
   local template_path="${PROXYGPT_ROOT}/templates/squid.conf"
   local rendered
 
   if [[ "$remote_port" != <-> ]] || (( remote_port < 1 || remote_port > 65535 )); then
-    proxygpt_die "Invalid remote Squid port: ${remote_port}"
+    proxygpt_die "Недопустимый удалённый порт Squid: ${remote_port}"
     return 1
   fi
 
   if [[ ! -f "$template_path" ]]; then
-    proxygpt_die "Squid configuration template is missing: ${template_path}"
+    proxygpt_die "Отсутствует шаблон конфигурации Squid: ${template_path}"
     return 1
   fi
 
@@ -157,7 +157,7 @@ proxygpt_render_squid_config() {
   rendered="${rendered//\{\{REMOTE_PROXY_PORT\}\}/$remote_port}"
 
   if [[ "$rendered" == *'{{'* || "$rendered" == *'}}'* ]]; then
-    proxygpt_die "Squid configuration contains an unresolved template value"
+    proxygpt_die "Конфигурация Squid содержит неподставленное значение шаблона"
     return 1
   fi
 
@@ -165,17 +165,17 @@ proxygpt_render_squid_config() {
 }
 
 proxygpt_render_sshd_dropin() {
-  local remote_port="${1:?remote Squid port is required}"
+  local remote_port="${1:?требуется удалённый порт Squid}"
   local template_path="${PROXYGPT_ROOT}/templates/sshd-proxygpt.conf"
   local rendered
 
   if [[ "$remote_port" != <-> ]] || (( remote_port < 1 || remote_port > 65535 )); then
-    proxygpt_die "Invalid remote Squid port: ${remote_port}"
+    proxygpt_die "Недопустимый удалённый порт Squid: ${remote_port}"
     return 1
   fi
 
   if [[ ! -f "$template_path" ]]; then
-    proxygpt_die "sshd policy template is missing: ${template_path}"
+    proxygpt_die "Отсутствует шаблон политики sshd: ${template_path}"
     return 1
   fi
 
@@ -183,7 +183,7 @@ proxygpt_render_sshd_dropin() {
   rendered="${rendered//\{\{REMOTE_PROXY_PORT\}\}/$remote_port}"
 
   if [[ "$rendered" == *'{{'* || "$rendered" == *'}}'* ]]; then
-    proxygpt_die "sshd policy contains an unresolved template value"
+    proxygpt_die "Политика sshd содержит неподставленное значение шаблона"
     return 1
   fi
 
@@ -202,7 +202,7 @@ proxygpt_prepare_server_package() {
      ! cp "${PROXYGPT_ROOT}/templates/sshd-authorized-keys-global.conf" "$package_dir/" ||
      ! cp "${PROXYGPT_ROOT}/templates/remote/server-common.sh" "$package_dir/" ||
      ! cp "${PROXYGPT_ROOT}/templates/remote/configure-server.sh" "$package_dir/"; then
-    proxygpt_die "Could not assemble the local server package: ${package_dir}"
+    proxygpt_die "Не удалось собрать локальный серверный пакет: ${package_dir}"
     return 1
   fi
 
@@ -211,14 +211,14 @@ proxygpt_prepare_server_package() {
     proxygpt_shell_assignment REMOTE_PORT "$remote_port"
     proxygpt_shell_assignment SERVER_HOST "$(proxygpt_config_get server_host)"
   } > "${package_dir}/settings.sh" || {
-    proxygpt_die "Could not write server package settings: ${package_dir}"
+    proxygpt_die "Не удалось записать настройки серверного пакета: ${package_dir}"
     return 1
   }
 
   if ! chmod 600 "${package_dir}"/* ||
      ! chmod 700 "${package_dir}/configure-server.sh" ||
      ! bash -n "${package_dir}/configure-server.sh" "${package_dir}/server-common.sh" "${package_dir}/settings.sh"; then
-    proxygpt_die "Server package validation failed: ${package_dir}"
+    proxygpt_die "Проверка серверного пакета завершилась ошибкой: ${package_dir}"
     return 1
   fi
 
@@ -229,7 +229,7 @@ proxygpt_remove_local_server_package() {
   local package_dir="$(proxygpt_config_get local_server_package_dir)"
   [[ "$package_dir" =~ '^/tmp/proxygpt-server-package\.[A-Za-z0-9]+$' ]] || return 1
   if ! rm -rf "$package_dir"; then
-    proxygpt_die "Could not remove the local server package: ${package_dir}"
+    proxygpt_die "Не удалось удалить локальный серверный пакет: ${package_dir}"
     return 1
   fi
   proxygpt_config_set local_server_package_dir "" || return 1

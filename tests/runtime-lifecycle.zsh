@@ -18,7 +18,7 @@ cp "${PROJECT_ROOT}/tests/fixtures/fake-target" "$TARGET_COMMAND"
 chmod 755 "${BIN_DIR}/proxygpt" "${BIN_DIR}/proxygpt-tunnel" "$TARGET_COMMAND"
 
 {
-  print -r -- 'TARGET_APP_NAME="Fake Target"'
+  print -r -- 'TARGET_APP_NAME="Тестовое приложение"'
   print -r -- "TARGET_APP_EXECUTABLE=${(qqq)TARGET_COMMAND}"
   print -r -- 'LOCAL_PORT="43128"'
   print -r -- 'PRODUCT_NAME="ProxyGPT"'
@@ -33,13 +33,13 @@ else
 fi
 
 if (( runtime_exit != 23 )); then
-  print -ru2 -- "Expected runtime exit 23, got ${runtime_exit}"
+  print -ru2 -- "Ожидался код завершения runtime 23, получен ${runtime_exit}"
   exit 1
 fi
 
 typeset -a events=("${(@f)$(<"$EVENTS_FILE")}")
 if [[ "${(j: :)events}" != "start target stop" ]]; then
-  print -ru2 -- "Unexpected lifecycle: ${(j: :)events}"
+  print -ru2 -- "Неожиданный жизненный цикл: ${(j: :)events}"
   exit 1
 fi
 
@@ -55,13 +55,13 @@ else
 fi
 
 if (( runtime_exit != 23 )); then
-  print -ru2 -- "Stop failure replaced target exit code: ${runtime_exit}"
+  print -ru2 -- "Ошибка остановки заменила код целевого приложения: ${runtime_exit}"
   exit 1
 fi
 
 events=("${(@f)$(<"$EVENTS_FILE")}")
 if [[ "${(j: :)events}" != "start target stop" ]]; then
-  print -ru2 -- "Unexpected stop-failure lifecycle: ${(j: :)events}"
+  print -ru2 -- "Неожиданный жизненный цикл при ошибке остановки: ${(j: :)events}"
   exit 1
 fi
 

@@ -46,11 +46,11 @@ select_installed_profile() {
   done
 
   if (( ${#installed_ids} == 0 )); then
-    uninstall_die "No profiles with a valid schema-2 manifest were found"
+    uninstall_die "Не найдены профили с корректным манифестом schema 2"
     return 1
   fi
 
-  proxygpt_prompt_menu "Profile to uninstall:" "${options[@]}"
+  proxygpt_prompt_menu "Профиль для удаления:" "${options[@]}"
   selection="$PROXYGPT_REPLY"
   UNINSTALL_PROFILE_ID="${installed_ids[selection]}"
   UNINSTALL_PRODUCT_NAME="$(proxygpt_profile_field "$UNINSTALL_PROFILE_ID" product)"
@@ -61,8 +61,8 @@ select_installed_profile() {
 
 validate_manifest() {
   [[ -r "$DEFAULT_MANIFEST" ]] || {
-    print -ru2 -- "Installation manifest is missing: ${DEFAULT_MANIFEST}"
-    print -ru2 -- "No files were removed. Remove the configured app, command link, data directory, and key pair manually."
+    print -ru2 -- "Манифест установки отсутствует: ${DEFAULT_MANIFEST}"
+    print -ru2 -- "Файлы не удалены. Удалите приложение, ссылку команды, каталог данных и пару ключей вручную."
     return 1
   }
 
@@ -73,40 +73,40 @@ validate_manifest() {
   for name in MANIFEST_SCHEMA PROFILE_ID PRODUCT_NAME CLI_NAME BUNDLE_ID \
               SERVER ADMIN_USER SSH_PORT SSH_HOST_KEY_POLICY TUNNEL_USER \
               SSH_KEY LOCAL_PORT CONTROL_DIR CONTROL_SOCKET DATA_ROOT RUNTIME_COMMAND CLI_LINK APP_PATH; do
-    [[ -n "${(P)name:-}" ]] || uninstall_die "Manifest value is missing: ${name}" || return 1
+    [[ -n "${(P)name:-}" ]] || uninstall_die "В манифесте отсутствует значение: ${name}" || return 1
   done
 
-  [[ "$MANIFEST_SCHEMA" == 2 ]] || uninstall_die "Unsupported manifest schema" || return 1
-  [[ "$PROFILE_ID" == "$UNINSTALL_PROFILE_ID" ]] || uninstall_die "Manifest profile mismatch" || return 1
-  [[ "$PRODUCT_NAME" == "$UNINSTALL_PRODUCT_NAME" ]] || uninstall_die "Manifest product mismatch" || return 1
-  [[ "$CLI_NAME" == "$UNINSTALL_CLI_NAME" ]] || uninstall_die "Manifest CLI mismatch" || return 1
-  [[ "$BUNDLE_ID" == "$UNINSTALL_BUNDLE_ID" ]] || uninstall_die "Manifest bundle identifier mismatch" || return 1
-  [[ "$SERVER" =~ '^[A-Za-z0-9][A-Za-z0-9._-]*$' ]] || uninstall_die "Unsafe server value" || return 1
-  [[ "$ADMIN_USER" =~ '^[A-Za-z_][A-Za-z0-9._-]*$' ]] || uninstall_die "Unsafe admin username" || return 1
-  [[ "$TUNNEL_USER" =~ '^[a-z_][a-z0-9_-]{0,31}$' && "$TUNNEL_USER" != root ]] || uninstall_die "Unsafe tunnel username" || return 1
-  [[ "$SSH_PORT" == <-> && "$SSH_PORT" -ge 1 && "$SSH_PORT" -le 65535 ]] || uninstall_die "Unsafe SSH port" || return 1
-  [[ "$LOCAL_PORT" == <-> && "$LOCAL_PORT" -ge 1 && "$LOCAL_PORT" -le 65535 ]] || uninstall_die "Unsafe local port" || return 1
-  [[ "$SSH_KEY" == /* && "$SSH_KEY" != *.pub && "${SSH_KEY:h}" != / ]] || uninstall_die "Unsafe SSH key path" || return 1
-  [[ "$DATA_ROOT" == "${HOME}/Library/Application Support/${UNINSTALL_PRODUCT_NAME}" ]] || uninstall_die "Unexpected data root" || return 1
-  [[ "$RUNTIME_COMMAND" == "${DATA_ROOT}/bin/${UNINSTALL_CLI_NAME}" ]] || uninstall_die "Unexpected runtime command" || return 1
-  [[ "$CONTROL_DIR" == "${HOME}/.ssh/control" ]] || uninstall_die "Unexpected control directory" || return 1
-  [[ "$CONTROL_SOCKET" == "${CONTROL_DIR}/${UNINSTALL_CLI_NAME}-${LOCAL_PORT}.sock" ]] || uninstall_die "Unexpected control socket" || return 1
-  [[ "$CLI_LINK" == "/usr/local/bin/${UNINSTALL_CLI_NAME}" ]] || uninstall_die "Unexpected command link" || return 1
-  [[ "$APP_PATH" == /* && "${APP_PATH:t}" == "${UNINSTALL_PRODUCT_NAME}.app" && "${APP_PATH:h}" != / ]] || uninstall_die "Unexpected app path" || return 1
-  [[ "$SSH_HOST_KEY_POLICY" == accept-new ]] || uninstall_die "Unexpected host-key policy" || return 1
-  [[ -f "$REMOTE_SCRIPT" ]] || uninstall_die "Remote uninstall template is missing" || return 1
+  [[ "$MANIFEST_SCHEMA" == 2 ]] || uninstall_die "Неподдерживаемая schema манифеста" || return 1
+  [[ "$PROFILE_ID" == "$UNINSTALL_PROFILE_ID" ]] || uninstall_die "Профиль манифеста не совпадает с выбранным" || return 1
+  [[ "$PRODUCT_NAME" == "$UNINSTALL_PRODUCT_NAME" ]] || uninstall_die "Продукт манифеста не совпадает с выбранным" || return 1
+  [[ "$CLI_NAME" == "$UNINSTALL_CLI_NAME" ]] || uninstall_die "CLI в манифесте не совпадает с выбранным профилем" || return 1
+  [[ "$BUNDLE_ID" == "$UNINSTALL_BUNDLE_ID" ]] || uninstall_die "Идентификатор пакета в манифесте не совпадает с выбранным профилем" || return 1
+  [[ "$SERVER" =~ '^[A-Za-z0-9][A-Za-z0-9._-]*$' ]] || uninstall_die "Небезопасное значение сервера" || return 1
+  [[ "$ADMIN_USER" =~ '^[A-Za-z_][A-Za-z0-9._-]*$' ]] || uninstall_die "Небезопасное имя администратора" || return 1
+  [[ "$TUNNEL_USER" =~ '^[a-z_][a-z0-9_-]{0,31}$' && "$TUNNEL_USER" != root ]] || uninstall_die "Небезопасное имя пользователя туннеля" || return 1
+  [[ "$SSH_PORT" == <-> && "$SSH_PORT" -ge 1 && "$SSH_PORT" -le 65535 ]] || uninstall_die "Небезопасный порт SSH" || return 1
+  [[ "$LOCAL_PORT" == <-> && "$LOCAL_PORT" -ge 1 && "$LOCAL_PORT" -le 65535 ]] || uninstall_die "Небезопасный локальный порт" || return 1
+  [[ "$SSH_KEY" == /* && "$SSH_KEY" != *.pub && "${SSH_KEY:h}" != / ]] || uninstall_die "Небезопасный путь к ключу SSH" || return 1
+  [[ "$DATA_ROOT" == "${HOME}/Library/Application Support/${UNINSTALL_PRODUCT_NAME}" ]] || uninstall_die "Неожиданный каталог данных" || return 1
+  [[ "$RUNTIME_COMMAND" == "${DATA_ROOT}/bin/${UNINSTALL_CLI_NAME}" ]] || uninstall_die "Неожиданная команда среды выполнения" || return 1
+  [[ "$CONTROL_DIR" == "${HOME}/.ssh/control" ]] || uninstall_die "Неожиданный каталог управляющих сокетов" || return 1
+  [[ "$CONTROL_SOCKET" == "${CONTROL_DIR}/${UNINSTALL_CLI_NAME}-${LOCAL_PORT}.sock" ]] || uninstall_die "Неожиданный управляющий сокет" || return 1
+  [[ "$CLI_LINK" == "/usr/local/bin/${UNINSTALL_CLI_NAME}" ]] || uninstall_die "Неожиданная ссылка команды" || return 1
+  [[ "$APP_PATH" == /* && "${APP_PATH:t}" == "${UNINSTALL_PRODUCT_NAME}.app" && "${APP_PATH:h}" != / ]] || uninstall_die "Неожиданный путь приложения" || return 1
+  [[ "$SSH_HOST_KEY_POLICY" == accept-new ]] || uninstall_die "Неожиданная политика host key" || return 1
+  [[ -f "$REMOTE_SCRIPT" ]] || uninstall_die "Отсутствует шаблон удалённого удаления" || return 1
 }
 
 stop_tunnel_before_removal() {
   local tunnel_command="${RUNTIME_COMMAND:h}/proxygpt-tunnel"
 
   if [[ -x "$tunnel_command" ]]; then
-    "$tunnel_command" stop || uninstall_die "Tunnel could not be stopped; nothing was removed"
+    "$tunnel_command" stop || uninstall_die "Не удалось остановить туннель; ничего не удалено"
     return
   fi
 
   if lsof -nP -iTCP:"$LOCAL_PORT" -sTCP:LISTEN >/dev/null 2>&1 || [[ -e "$CONTROL_SOCKET" || -L "$CONTROL_SOCKET" ]]; then
-    uninstall_die "Tunnel manager is missing while its listener or socket may remain; nothing was removed"
+    uninstall_die "Менеджер туннеля отсутствует, но процесс прослушивания или сокет могли сохраниться; ничего не удалено"
     return 1
   fi
 }
@@ -134,7 +134,7 @@ remove_server_user() {
     operation_status=$?
     (( operation_status == 0 )) && operation_status=1
   elif [[ ! "$remote_stage" =~ '^/tmp/proxygpt-uninstall\.[A-Za-z0-9]+$' ]]; then
-    proxygpt_error "Unexpected remote staging path"
+    proxygpt_error "Неожиданный путь удалённой временной области"
     operation_status=1
   fi
 
@@ -173,27 +173,27 @@ remove_server_user() {
 select_installed_profile
 validate_manifest
 
-proxygpt_prompt_menu "Uninstall scope:" \
-  "Local macOS components only" \
-  "Local macOS components and tunnel account on the server"
+proxygpt_prompt_menu "Область удаления:" \
+  "Только локальные компоненты macOS" \
+  "Локальные компоненты и пользователь туннеля на сервере"
 typeset -r SCOPE="$PROXYGPT_REPLY"
 
-proxygpt_prompt_menu "Local SSH key pair:" \
-  "Keep ${SSH_KEY} and ${SSH_KEY}.pub" \
-  "Delete ${SSH_KEY} and ${SSH_KEY}.pub"
+proxygpt_prompt_menu "Локальная пара ключей SSH:" \
+  "Сохранить ${SSH_KEY} и ${SSH_KEY}.pub" \
+  "Удалить ${SSH_KEY} и ${SSH_KEY}.pub"
 typeset -r DELETE_KEY="$([[ "$PROXYGPT_REPLY" == 2 ]] && print yes || print no)"
 
 print
-print -r -- "Removal summary:"
-print -r -- "  Scope: $([[ "$SCOPE" == 2 ]] && print 'local + server' || print 'local only')"
-print -r -- "  App: ${APP_PATH}"
-print -r -- "  Command: ${CLI_LINK}"
-print -r -- "  Data: ${DATA_ROOT}"
-print -r -- "  SSH key pair: $([[ "$DELETE_KEY" == yes ]] && print delete || print preserve)"
-[[ "$SCOPE" == 2 ]] && print -r -- "  SERVER ACCOUNT AND HOME: ${TUNNEL_USER}@${SERVER}"
+print -r -- "Сводка удаления:"
+print -r -- "  Область: $([[ "$SCOPE" == 2 ]] && print 'локально + сервер' || print 'только локально')"
+print -r -- "  Приложение: ${APP_PATH}"
+print -r -- "  Команда: ${CLI_LINK}"
+print -r -- "  Данные: ${DATA_ROOT}"
+print -r -- "  Пара ключей SSH: $([[ "$DELETE_KEY" == yes ]] && print 'удалить' || print 'сохранить')"
+[[ "$SCOPE" == 2 ]] && print -r -- "  СЕРВЕРНАЯ УЧЁТНАЯ ЗАПИСЬ И HOME: ${TUNNEL_USER}@${SERVER}"
 print
-proxygpt_prompt_menu "Proceed with permanent removal?" "Remove" "Abort"
-[[ "$PROXYGPT_REPLY" == 1 ]] || { proxygpt_warn "Uninstall cancelled; nothing was removed"; exit 130; }
+proxygpt_prompt_menu "Продолжить безвозвратное удаление?" "Удалить" "Прервать"
+[[ "$PROXYGPT_REPLY" == 1 ]] || { proxygpt_warn "Удаление отменено; ничего не удалено"; exit 130; }
 
 stop_tunnel_before_removal || exit $?
 if [[ "$SCOPE" == 2 ]]; then
@@ -207,4 +207,4 @@ if [[ "$DELETE_KEY" == yes ]]; then
 fi
 proxygpt_remove_configured_path "$DATA_ROOT" || exit $?
 
-proxygpt_success "${UNINSTALL_PRODUCT_NAME} uninstall completed"
+proxygpt_success "Удаление ${UNINSTALL_PRODUCT_NAME} завершено"
