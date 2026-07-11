@@ -35,7 +35,7 @@ proxygpt_step_integration() {
     return "$cleanup_status"
   fi
 
-  proxygpt_success "ProxyGPT installation completed"
+  proxygpt_success "$(proxygpt_config_get product_name) installation completed"
   print
   print -r -- "Launch from Finder: ${app_path}"
   print -r -- "Launch from Terminal: ${cli_link}"

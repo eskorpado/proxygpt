@@ -9,6 +9,7 @@ typeset -gr PROXYGPT_VERSION="0.1.0-dev"
 
 source "${PROXYGPT_ROOT}/lib/ui.zsh"
 source "${PROXYGPT_ROOT}/lib/input.zsh"
+source "${PROXYGPT_ROOT}/lib/profile.zsh"
 source "${PROXYGPT_ROOT}/lib/config.zsh"
 source "${PROXYGPT_ROOT}/lib/logging.zsh"
 source "${PROXYGPT_ROOT}/lib/ports.zsh"

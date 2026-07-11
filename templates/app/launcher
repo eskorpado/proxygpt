@@ -3,11 +3,11 @@
 emulate -LR zsh
 setopt ERR_EXIT NO_UNSET PIPE_FAIL
 
-typeset -r RUNTIME_COMMAND="${HOME}/Library/Application Support/ProxyGPT/bin/proxygpt"
+{{RUNTIME_ASSIGNMENT}}
 
 if [[ ! -x "$RUNTIME_COMMAND" ]]; then
   /usr/bin/osascript \
-    -e 'display alert "ProxyGPT runtime is missing" message "Run the ProxyGPT installer again." as critical' \
+    -e 'display alert "{{PRODUCT_NAME}} runtime is missing" message "Run the ProxyGPT installer again." as critical' \
     >/dev/null 2>&1 || true
   exit 1
 fi

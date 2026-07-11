@@ -21,6 +21,7 @@ chmod 755 "${BIN_DIR}/proxygpt" "${BIN_DIR}/proxygpt-tunnel" "$TARGET_COMMAND"
   print -r -- 'TARGET_APP_NAME="Fake Target"'
   print -r -- "TARGET_APP_EXECUTABLE=${(qqq)TARGET_COMMAND}"
   print -r -- 'LOCAL_PORT="43128"'
+  print -r -- 'PRODUCT_NAME="ProxyGPT"'
 } > "${CONFIG_DIR}/proxygpt.conf"
 
 if PROXYGPT_TEST_EVENTS="$EVENTS_FILE" \

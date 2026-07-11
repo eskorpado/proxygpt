@@ -16,6 +16,7 @@ typeset -gA PROXYGPT_CONFIG=(
   runtime_command "${BIN_DIR}/proxygpt"
   app_path "${TEST_ROOT}/ProxyGPT.app"
   cli_link_path "${TEST_ROOT}/proxygpt"
+  product_name "ProxyGPT"
 )
 typeset -ga checks=()
 

@@ -99,6 +99,7 @@ proxygpt_validate_target_app() {
 
 proxygpt_configure_target_app() {
   local requested="${1:?application name or path is required}"
+  local profile_id="${2:?output profile id is required}"
   local bundle
   local executable_path
 
@@ -113,6 +114,7 @@ proxygpt_configure_target_app() {
   proxygpt_config_set target_app_name "${bundle:t:r}"
   proxygpt_config_set target_app_path "$bundle"
   proxygpt_config_set target_app_executable "$executable_path"
+  proxygpt_configure_profile "$profile_id"
 }
 
 proxygpt_prompt_target_app() {
@@ -121,13 +123,15 @@ proxygpt_prompt_target_app() {
   local requested
   local selection
   local -a known_bundles=()
+  local -a known_profiles=()
   local -a menu_options=()
   local -A seen_bundles=()
 
-  for known_name in ChatGPT Codex; do
+  for known_name in ChatGPT Codex Claude; do
     if bundle="$(proxygpt_find_target_app "$known_name")"; then
       if [[ -z "${seen_bundles[$bundle]-}" ]]; then
         known_bundles+=("$bundle")
+        known_profiles+=("${known_name:l}")
         menu_options+=("${bundle:t} — ${bundle}")
         seen_bundles[$bundle]=1
       fi
@@ -140,7 +144,7 @@ proxygpt_prompt_target_app() {
     selection="$PROXYGPT_REPLY"
 
     if (( selection <= ${#known_bundles} )); then
-      proxygpt_configure_target_app "${known_bundles[selection]}"
+      proxygpt_configure_target_app "${known_bundles[selection]}" "${known_profiles[selection]}"
       return
     fi
   fi
@@ -149,7 +153,7 @@ proxygpt_prompt_target_app() {
     proxygpt_prompt_nonempty "Application name or full .app path"
     requested="$PROXYGPT_REPLY"
 
-    if proxygpt_configure_target_app "$requested"; then
+    if proxygpt_configure_target_app "$requested" llm; then
       return 0
     fi
 

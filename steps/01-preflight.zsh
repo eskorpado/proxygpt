@@ -104,16 +104,18 @@ proxygpt_prompt_tunnel_user() {
 
 proxygpt_prompt_app_path() {
   local default_path="$(proxygpt_config_get app_path)"
+  local product_name="$(proxygpt_config_get product_name)"
   local selected_path
 
   while true; do
-    proxygpt_prompt_nonempty "ProxyGPT app location" "$default_path"
+    proxygpt_prompt_nonempty "${product_name} app location" "$default_path"
     selected_path="$(proxygpt_expand_user_path "$PROXYGPT_REPLY")"
-    if proxygpt_app_path_is_safe "$selected_path"; then
+    if proxygpt_app_path_is_safe "$selected_path" && \
+       [[ "${selected_path:t}" == "${product_name}.app" ]]; then
       proxygpt_config_set app_path "$selected_path"
       return 0
     fi
-    proxygpt_warn "App location must be an absolute path ending in .app"
+    proxygpt_warn "App path must be absolute and end with ${product_name}.app"
     default_path=""
   done
 }
@@ -121,13 +123,14 @@ proxygpt_prompt_app_path() {
 proxygpt_print_install_summary() {
   print
   print -r -- "Installation summary"
+  print -r -- "  Output profile:   $(proxygpt_config_get product_name)"
   print -r -- "  Target app:       $(proxygpt_config_get target_app_path)"
   print -r -- "  Server:           $(proxygpt_config_get admin_user)@$(proxygpt_config_get server_host):$(proxygpt_config_get ssh_port)"
   print -r -- "  Tunnel user:      $(proxygpt_config_get tunnel_user)"
   print -r -- "  Remote proxy:     127.0.0.1:$(proxygpt_config_get remote_proxy_port)"
   print -r -- "  Local proxy:      127.0.0.1:$(proxygpt_config_get local_proxy_port)"
   print -r -- "  SSH key:          $(proxygpt_config_get ssh_key_path) ($(proxygpt_config_get ssh_key_action))"
-  print -r -- "  ProxyGPT app:     $(proxygpt_config_get app_path)"
+  print -r -- "  Output app:       $(proxygpt_config_get app_path)"
   print -r -- "  CLI command:      $(proxygpt_config_get cli_link_path)"
   print -r -- "  Icon:             $(proxygpt_config_get icon_source)"
 }

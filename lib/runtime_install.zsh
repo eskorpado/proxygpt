@@ -31,6 +31,7 @@ proxygpt_write_runtime_config() {
     proxygpt_shell_assignment CONTROL_SOCKET "$(proxygpt_config_get tunnel_control_socket)"
     proxygpt_shell_assignment TARGET_APP_NAME "$(proxygpt_config_get target_app_name)"
     proxygpt_shell_assignment TARGET_APP_EXECUTABLE "$(proxygpt_config_get target_app_executable)"
+    proxygpt_shell_assignment PRODUCT_NAME "$(proxygpt_config_get product_name)"
   } > "$temp_file" || {
     proxygpt_die "Could not write runtime configuration: ${temp_file}"
     return 1
@@ -57,7 +58,11 @@ proxygpt_write_install_manifest() {
   fi
 
   {
-    proxygpt_shell_assignment MANIFEST_SCHEMA "1"
+    proxygpt_shell_assignment MANIFEST_SCHEMA "2"
+    proxygpt_shell_assignment PROFILE_ID "$(proxygpt_config_get profile_id)"
+    proxygpt_shell_assignment PRODUCT_NAME "$(proxygpt_config_get product_name)"
+    proxygpt_shell_assignment CLI_NAME "$(proxygpt_config_get cli_name)"
+    proxygpt_shell_assignment BUNDLE_ID "$(proxygpt_config_get bundle_id)"
     proxygpt_shell_assignment SERVER "$(proxygpt_config_get server_host)"
     proxygpt_shell_assignment ADMIN_USER "$(proxygpt_config_get admin_user)"
     proxygpt_shell_assignment SSH_PORT "$(proxygpt_config_get ssh_port)"
@@ -112,5 +117,5 @@ proxygpt_install_runtime_files() {
 
   proxygpt_write_runtime_config || return 1
   proxygpt_write_install_manifest || return 1
-  proxygpt_success "ProxyGPT runtime scripts installed"
+  proxygpt_success "$(proxygpt_config_get product_name) runtime scripts installed"
 }

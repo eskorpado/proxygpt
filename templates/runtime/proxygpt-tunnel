@@ -9,7 +9,7 @@ typeset -r CONFIG_FILE="${SCRIPT_DIR:h}/config/proxygpt.conf"
 [[ -r "$CONFIG_FILE" ]] || { print -ru2 -- "Missing config: ${CONFIG_FILE}"; exit 1; }
 source "$CONFIG_FILE"
 
-for name in SERVER SERVER_USER SSH_PORT SSH_KEY LOCAL_PORT REMOTE_PORT CONTROL_DIR CONTROL_SOCKET SSH_HOST_KEY_POLICY; do
+for name in SERVER SERVER_USER SSH_PORT SSH_KEY LOCAL_PORT REMOTE_PORT CONTROL_DIR CONTROL_SOCKET SSH_HOST_KEY_POLICY PRODUCT_NAME; do
   [[ -n "${(P)name:-}" ]] || { print -ru2 -- "Missing config value: ${name}"; exit 1; }
 done
 
@@ -48,7 +48,7 @@ remove_confirmed_stale_socket() {
 
 start_tunnel() {
   if master_check; then
-    print -r -- "ProxyGPT tunnel is already running"
+    print -r -- "${PRODUCT_NAME} tunnel is already running"
     return 0
   fi
 
@@ -81,13 +81,13 @@ start_tunnel() {
 
   master_check || { print -ru2 -- "SSH master health check failed"; return 1; }
   port_is_occupied || { print -ru2 -- "Local proxy listener did not appear"; return 1; }
-  print -r -- "ProxyGPT tunnel started"
+  print -r -- "${PRODUCT_NAME} tunnel started"
 }
 
 stop_tunnel() {
   if master_check; then
     ssh -S "$CONTROL_SOCKET" -O exit -p "$SSH_PORT" "$TARGET" >/dev/null
-    print -r -- "ProxyGPT tunnel stopped"
+    print -r -- "${PRODUCT_NAME} tunnel stopped"
     return 0
   fi
 
@@ -98,7 +98,7 @@ stop_tunnel() {
   fi
 
   remove_confirmed_stale_socket
-  print -r -- "ProxyGPT tunnel is not running"
+  print -r -- "${PRODUCT_NAME} tunnel is not running"
 }
 
 show_status() {

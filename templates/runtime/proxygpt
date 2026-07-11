@@ -14,15 +14,16 @@ typeset -r CONFIG_FILE="${SCRIPT_DIR:h}/config/proxygpt.conf"
 typeset -r TUNNEL_COMMAND="${SCRIPT_DIR}/proxygpt-tunnel"
 
 if [[ ! -r "$CONFIG_FILE" ]]; then
-  print -ru2 -- "ProxyGPT configuration is not readable: ${CONFIG_FILE}"
+  print -ru2 -- "Proxy configuration is not readable: ${CONFIG_FILE}"
   exit 1
 fi
 
 source "$CONFIG_FILE"
 
-: "${TARGET_APP_NAME:?Missing TARGET_APP_NAME in ProxyGPT config}"
-: "${TARGET_APP_EXECUTABLE:?Missing TARGET_APP_EXECUTABLE in ProxyGPT config}"
-: "${LOCAL_PORT:?Missing LOCAL_PORT in ProxyGPT config}"
+: "${TARGET_APP_NAME:?Missing TARGET_APP_NAME in proxy config}"
+: "${TARGET_APP_EXECUTABLE:?Missing TARGET_APP_EXECUTABLE in proxy config}"
+: "${LOCAL_PORT:?Missing LOCAL_PORT in proxy config}"
+: "${PRODUCT_NAME:?Missing PRODUCT_NAME in proxy config}"
 
 if [[ ! -x "$TARGET_APP_EXECUTABLE" ]]; then
   print -ru2 -- "Target app executable is missing: ${TARGET_APP_EXECUTABLE}"
@@ -30,7 +31,7 @@ if [[ ! -x "$TARGET_APP_EXECUTABLE" ]]; then
 fi
 
 if [[ ! -x "$TUNNEL_COMMAND" ]]; then
-  print -ru2 -- "ProxyGPT tunnel command is missing: ${TUNNEL_COMMAND}"
+  print -ru2 -- "${PRODUCT_NAME} tunnel command is missing: ${TUNNEL_COMMAND}"
   exit 1
 fi
 
@@ -44,7 +45,7 @@ stop_tunnel() {
   fi
 
   if ! "$TUNNEL_COMMAND" stop; then
-    print -ru2 -- "Warning: ProxyGPT could not stop the SSH tunnel"
+    print -ru2 -- "Warning: ${PRODUCT_NAME} could not stop the SSH tunnel"
   fi
 
   TUNNEL_ACTIVE=0
@@ -71,9 +72,10 @@ if target_is_running; then
   print -ru2 -- \
     "Warning: ${TARGET_APP_NAME} is already running; proxy flags may be ignored"
 
-  PROXYGPT_TARGET_NAME="$TARGET_APP_NAME" /usr/bin/osascript \
+  PROXYGPT_TARGET_NAME="$TARGET_APP_NAME" PROXY_PRODUCT_NAME="$PRODUCT_NAME" /usr/bin/osascript \
     -e 'set appName to system attribute "PROXYGPT_TARGET_NAME"' \
-    -e 'display notification "Proxy flags may be ignored because the app is already running." with title "ProxyGPT" subtitle appName' \
+    -e 'set productName to system attribute "PROXY_PRODUCT_NAME"' \
+    -e 'display notification "Proxy flags may be ignored because the app is already running." with title productName subtitle appName' \
     >/dev/null 2>&1 || true
 fi
 

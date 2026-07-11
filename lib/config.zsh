@@ -1,6 +1,10 @@
 # Central in-memory installer configuration.
 
 typeset -ga PROXYGPT_CONFIG_KEYS=(
+  profile_id
+  product_name
+  cli_name
+  bundle_id
   server_host
   admin_user
   ssh_port
@@ -35,11 +39,6 @@ typeset -gA PROXYGPT_CONFIG_KEY_SET=()
 
 proxygpt_config_init() {
   local key
-  local local_user="${USER:-${LOGNAME:-}}"
-
-  if [[ -z "$local_user" ]]; then
-    local_user="$(id -un)"
-  fi
 
   PROXYGPT_CONFIG_KEY_SET=()
   for key in "${PROXYGPT_CONFIG_KEYS[@]}"; do
@@ -47,25 +46,29 @@ proxygpt_config_init() {
   done
 
   PROXYGPT_CONFIG=(
+    profile_id ""
+    product_name ""
+    cli_name ""
+    bundle_id ""
     server_host ""
     admin_user ""
     ssh_port "22"
     ssh_host_key_policy "accept-new"
     admin_control_dir ""
     admin_control_socket ""
-    tunnel_user "codex-${local_user}"
+    tunnel_user ""
     remote_proxy_port "3128"
-    local_proxy_port "3128"
+    local_proxy_port ""
     tunnel_control_dir "${HOME}/.ssh/control"
-    tunnel_control_socket "${HOME}/.ssh/control/proxygpt-3128.sock"
-    ssh_key_path "${HOME}/.ssh/proxygpt_ed25519"
+    tunnel_control_socket ""
+    ssh_key_path ""
     ssh_key_action ""
-    data_root "${HOME}/Library/Application Support/ProxyGPT"
-    logs_dir "${HOME}/Library/Application Support/ProxyGPT/logs"
+    data_root ""
+    logs_dir ""
     installer_log ""
-    runtime_command "${HOME}/Library/Application Support/ProxyGPT/bin/proxygpt"
-    cli_link_path "/usr/local/bin/proxygpt"
-    app_path "${HOME}/Applications/ProxyGPT.app"
+    runtime_command ""
+    cli_link_path ""
+    app_path ""
     target_app_name ""
     target_app_path ""
     target_app_executable ""
@@ -73,8 +76,39 @@ proxygpt_config_init() {
     local_server_package_dir ""
     local_identity_package_dir ""
     icon_mode "bundled"
-    icon_source "${PROXYGPT_ROOT:-$PWD}/ProxyGPT.icns"
+    icon_source ""
   )
+}
+
+proxygpt_configure_profile() {
+  local profile_id="${1:?profile id is required}"
+  local local_user="${USER:-${LOGNAME:-}}"
+  local product_name cli_name bundle_id tunnel_prefix data_root
+
+  proxygpt_profile_is_valid "$profile_id" || {
+    proxygpt_die "Unknown output profile: ${profile_id}"
+    return 1
+  }
+  [[ -n "$local_user" ]] || local_user="$(id -un)"
+
+  product_name="$(proxygpt_profile_field "$profile_id" product)"
+  cli_name="$(proxygpt_profile_field "$profile_id" cli)"
+  bundle_id="$(proxygpt_profile_field "$profile_id" bundle_id)"
+  tunnel_prefix="$(proxygpt_profile_field "$profile_id" tunnel_prefix)"
+  data_root="${HOME}/Library/Application Support/${product_name}"
+
+  proxygpt_config_set profile_id "$profile_id"
+  proxygpt_config_set product_name "$product_name"
+  proxygpt_config_set cli_name "$cli_name"
+  proxygpt_config_set bundle_id "$bundle_id"
+  proxygpt_config_set tunnel_user "${tunnel_prefix}-${local_user}"
+  proxygpt_config_set ssh_key_path "${HOME}/.ssh/${cli_name}_ed25519"
+  proxygpt_config_set data_root "$data_root"
+  proxygpt_config_set logs_dir "${data_root}/logs"
+  proxygpt_config_set runtime_command "${data_root}/bin/${cli_name}"
+  proxygpt_config_set cli_link_path "/usr/local/bin/${cli_name}"
+  proxygpt_config_set app_path "${HOME}/Applications/${product_name}.app"
+  proxygpt_config_set icon_source "${PROXYGPT_ROOT:-$PWD}/assets/${product_name}.icns"
 }
 
 proxygpt_config_has_key() {

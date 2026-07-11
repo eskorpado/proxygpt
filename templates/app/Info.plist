@@ -3,11 +3,11 @@
 <plist version="1.0">
 <dict>
     <key>CFBundleName</key>
-    <string>ProxyGPT</string>
+    <string>{{PRODUCT_NAME}}</string>
     <key>CFBundleDisplayName</key>
-    <string>ProxyGPT</string>
+    <string>{{PRODUCT_NAME}}</string>
     <key>CFBundleIdentifier</key>
-    <string>com.local.proxygpt</string>
+    <string>{{BUNDLE_ID}}</string>
     <key>CFBundleExecutable</key>
     <string>launcher</string>
     <key>CFBundlePackageType</key>
@@ -17,7 +17,7 @@
     <key>CFBundleShortVersionString</key>
     <string>1.0</string>
     <key>CFBundleIconFile</key>
-    <string>ProxyGPT.icns</string>
+    <string>{{ICON_FILE}}</string>
     <key>NSHighResolutionCapable</key>
     <true/>
 </dict>

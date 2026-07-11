@@ -4,16 +4,59 @@ emulate -LR zsh
 setopt ERR_EXIT NO_UNSET PIPE_FAIL
 
 typeset -r ROOT="${0:A:h}"
-typeset -r DEFAULT_MANIFEST="${HOME}/Library/Application Support/ProxyGPT/config/install-manifest.conf"
 typeset -r REMOTE_SCRIPT="${ROOT}/templates/remote/uninstall-user.sh"
 
 source "${ROOT}/lib/ui.zsh"
 source "${ROOT}/lib/input.zsh"
+source "${ROOT}/lib/profile.zsh"
 source "${ROOT}/lib/uninstall_local.zsh"
+
+typeset -g DEFAULT_MANIFEST=""
+typeset -g UNINSTALL_PROFILE_ID=""
+typeset -g UNINSTALL_PRODUCT_NAME=""
+typeset -g UNINSTALL_CLI_NAME=""
+typeset -g UNINSTALL_BUNDLE_ID=""
 
 uninstall_die() {
   proxygpt_error "$1"
   return 1
+}
+
+select_installed_profile() {
+  local profile_id product_name cli_name bundle_id manifest_path selection
+  local -a installed_ids=()
+  local -a options=()
+
+  for profile_id in "${PROXYGPT_PROFILE_IDS[@]}"; do
+    product_name="$(proxygpt_profile_field "$profile_id" product)"
+    cli_name="$(proxygpt_profile_field "$profile_id" cli)"
+    bundle_id="$(proxygpt_profile_field "$profile_id" bundle_id)"
+    manifest_path="${HOME}/Library/Application Support/${product_name}/config/install-manifest.conf"
+    if [[ -e "$manifest_path" || -L "$manifest_path" ]] && (
+      DEFAULT_MANIFEST="$manifest_path"
+      UNINSTALL_PROFILE_ID="$profile_id"
+      UNINSTALL_PRODUCT_NAME="$product_name"
+      UNINSTALL_CLI_NAME="$cli_name"
+      UNINSTALL_BUNDLE_ID="$bundle_id"
+      validate_manifest >/dev/null 2>&1
+    ); then
+      installed_ids+=("$profile_id")
+      options+=("${product_name} — ${manifest_path}")
+    fi
+  done
+
+  if (( ${#installed_ids} == 0 )); then
+    uninstall_die "No profiles with a valid schema-2 manifest were found"
+    return 1
+  fi
+
+  proxygpt_prompt_menu "Profile to uninstall:" "${options[@]}"
+  selection="$PROXYGPT_REPLY"
+  UNINSTALL_PROFILE_ID="${installed_ids[selection]}"
+  UNINSTALL_PRODUCT_NAME="$(proxygpt_profile_field "$UNINSTALL_PROFILE_ID" product)"
+  UNINSTALL_CLI_NAME="$(proxygpt_profile_field "$UNINSTALL_PROFILE_ID" cli)"
+  UNINSTALL_BUNDLE_ID="$(proxygpt_profile_field "$UNINSTALL_PROFILE_ID" bundle_id)"
+  DEFAULT_MANIFEST="${HOME}/Library/Application Support/${UNINSTALL_PRODUCT_NAME}/config/install-manifest.conf"
 }
 
 validate_manifest() {
@@ -27,24 +70,29 @@ validate_manifest() {
   source "$DEFAULT_MANIFEST"
 
   local name
-  for name in MANIFEST_SCHEMA SERVER ADMIN_USER SSH_PORT SSH_HOST_KEY_POLICY TUNNEL_USER \
+  for name in MANIFEST_SCHEMA PROFILE_ID PRODUCT_NAME CLI_NAME BUNDLE_ID \
+              SERVER ADMIN_USER SSH_PORT SSH_HOST_KEY_POLICY TUNNEL_USER \
               SSH_KEY LOCAL_PORT CONTROL_DIR CONTROL_SOCKET DATA_ROOT RUNTIME_COMMAND CLI_LINK APP_PATH; do
     [[ -n "${(P)name:-}" ]] || uninstall_die "Manifest value is missing: ${name}" || return 1
   done
 
-  [[ "$MANIFEST_SCHEMA" == 1 ]] || uninstall_die "Unsupported manifest schema" || return 1
+  [[ "$MANIFEST_SCHEMA" == 2 ]] || uninstall_die "Unsupported manifest schema" || return 1
+  [[ "$PROFILE_ID" == "$UNINSTALL_PROFILE_ID" ]] || uninstall_die "Manifest profile mismatch" || return 1
+  [[ "$PRODUCT_NAME" == "$UNINSTALL_PRODUCT_NAME" ]] || uninstall_die "Manifest product mismatch" || return 1
+  [[ "$CLI_NAME" == "$UNINSTALL_CLI_NAME" ]] || uninstall_die "Manifest CLI mismatch" || return 1
+  [[ "$BUNDLE_ID" == "$UNINSTALL_BUNDLE_ID" ]] || uninstall_die "Manifest bundle identifier mismatch" || return 1
   [[ "$SERVER" =~ '^[A-Za-z0-9][A-Za-z0-9._-]*$' ]] || uninstall_die "Unsafe server value" || return 1
   [[ "$ADMIN_USER" =~ '^[A-Za-z_][A-Za-z0-9._-]*$' ]] || uninstall_die "Unsafe admin username" || return 1
   [[ "$TUNNEL_USER" =~ '^[a-z_][a-z0-9_-]{0,31}$' && "$TUNNEL_USER" != root ]] || uninstall_die "Unsafe tunnel username" || return 1
   [[ "$SSH_PORT" == <-> && "$SSH_PORT" -ge 1 && "$SSH_PORT" -le 65535 ]] || uninstall_die "Unsafe SSH port" || return 1
   [[ "$LOCAL_PORT" == <-> && "$LOCAL_PORT" -ge 1 && "$LOCAL_PORT" -le 65535 ]] || uninstall_die "Unsafe local port" || return 1
   [[ "$SSH_KEY" == /* && "$SSH_KEY" != *.pub && "${SSH_KEY:h}" != / ]] || uninstall_die "Unsafe SSH key path" || return 1
-  [[ "$DATA_ROOT" == "${HOME}/Library/Application Support/ProxyGPT" ]] || uninstall_die "Unexpected data root" || return 1
-  [[ "$RUNTIME_COMMAND" == "${DATA_ROOT}/bin/proxygpt" ]] || uninstall_die "Unexpected runtime command" || return 1
+  [[ "$DATA_ROOT" == "${HOME}/Library/Application Support/${UNINSTALL_PRODUCT_NAME}" ]] || uninstall_die "Unexpected data root" || return 1
+  [[ "$RUNTIME_COMMAND" == "${DATA_ROOT}/bin/${UNINSTALL_CLI_NAME}" ]] || uninstall_die "Unexpected runtime command" || return 1
   [[ "$CONTROL_DIR" == "${HOME}/.ssh/control" ]] || uninstall_die "Unexpected control directory" || return 1
-  [[ "$CONTROL_SOCKET" == "${CONTROL_DIR}/proxygpt-${LOCAL_PORT}.sock" ]] || uninstall_die "Unexpected control socket" || return 1
-  [[ "$CLI_LINK" == /usr/local/bin/proxygpt ]] || uninstall_die "Unexpected command link" || return 1
-  [[ "$APP_PATH" == /*.app && "${APP_PATH:h}" != / ]] || uninstall_die "Unsafe app path" || return 1
+  [[ "$CONTROL_SOCKET" == "${CONTROL_DIR}/${UNINSTALL_CLI_NAME}-${LOCAL_PORT}.sock" ]] || uninstall_die "Unexpected control socket" || return 1
+  [[ "$CLI_LINK" == "/usr/local/bin/${UNINSTALL_CLI_NAME}" ]] || uninstall_die "Unexpected command link" || return 1
+  [[ "$APP_PATH" == /* && "${APP_PATH:t}" == "${UNINSTALL_PRODUCT_NAME}.app" && "${APP_PATH:h}" != / ]] || uninstall_die "Unexpected app path" || return 1
   [[ "$SSH_HOST_KEY_POLICY" == accept-new ]] || uninstall_die "Unexpected host-key policy" || return 1
   [[ -f "$REMOTE_SCRIPT" ]] || uninstall_die "Remote uninstall template is missing" || return 1
 }
@@ -122,6 +170,7 @@ remove_server_user() {
   (( cleanup_status == 0 )) || return "$cleanup_status"
 }
 
+select_installed_profile
 validate_manifest
 
 proxygpt_prompt_menu "Uninstall scope:" \
@@ -158,4 +207,4 @@ if [[ "$DELETE_KEY" == yes ]]; then
 fi
 proxygpt_remove_configured_path "$DATA_ROOT" || exit $?
 
-proxygpt_success "ProxyGPT uninstall completed"
+proxygpt_success "${UNINSTALL_PRODUCT_NAME} uninstall completed"

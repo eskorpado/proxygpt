@@ -23,10 +23,31 @@ proxygpt_local_port_is_in_use() {
   [[ -n "$details" ]]
 }
 
+proxygpt_random_free_local_port() {
+  local candidate
+  local attempt
+
+  for (( attempt = 1; attempt <= 128; attempt++ )); do
+    candidate=$(( 49152 + ((((RANDOM << 15) | RANDOM)) % 16384) ))
+    if ! proxygpt_local_port_is_in_use "$candidate"; then
+      print -r -- "$candidate"
+      return 0
+    fi
+  done
+
+  proxygpt_die "Could not select a free random local port from 49152-65535"
+  return 1
+}
+
 proxygpt_prompt_local_proxy_port() {
   local default_port="$(proxygpt_config_get local_proxy_port)"
   local selected_port
   local details
+
+  if [[ -z "$default_port" ]]; then
+    default_port="$(proxygpt_random_free_local_port)" || return 1
+    proxygpt_config_set local_proxy_port "$default_port"
+  fi
 
   while true; do
     proxygpt_prompt_nonempty "Local proxy port" "$default_port"
@@ -47,7 +68,7 @@ proxygpt_prompt_local_proxy_port() {
 
     proxygpt_config_set local_proxy_port "$selected_port"
     proxygpt_config_set tunnel_control_socket \
-      "$(proxygpt_config_get tunnel_control_dir)/proxygpt-${selected_port}.sock"
+      "$(proxygpt_config_get tunnel_control_dir)/$(proxygpt_config_get cli_name)-${selected_port}.sock"
     proxygpt_success "Local proxy port is available: ${selected_port}"
     return 0
   done

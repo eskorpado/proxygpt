@@ -113,6 +113,7 @@ proxygpt_generate_ssh_key() {
   local public_key="${private_key}.pub"
   local key_directory="${private_key:h}"
   local server_host="$(proxygpt_config_get server_host)"
+  local cli_name="$(proxygpt_config_get cli_name)"
   local fingerprint
 
   if [[ "$private_key" != /* ]]; then
@@ -134,7 +135,7 @@ proxygpt_generate_ssh_key() {
     -t ed25519 \
     -N "" \
     -f "$private_key" \
-    -C "proxygpt@${server_host}"
+    -C "${cli_name}@${server_host}"
 
   chmod 600 "$private_key"
   chmod 644 "$public_key"
