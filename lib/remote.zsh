@@ -280,12 +280,18 @@ proxygpt_remote_script_command() {
 
 proxygpt_remote_execute_staged_script() {
   local script_name="${1:?требуется имя удалённого скрипта}"
+  local remote_stage="$(proxygpt_config_get remote_stage_dir)"
   local target="$(proxygpt_remote_admin_target)"
   local ssh_port="$(proxygpt_config_get ssh_port)"
   local host_key_policy="$(proxygpt_config_get ssh_host_key_policy)"
   local control_socket="$(proxygpt_config_get admin_control_socket)"
   local remote_command="$(proxygpt_remote_script_command "$script_name")"
-  local exit_code
+  local exit_code=0
+
+  if ! proxygpt_remote_validate_stage_dir "$remote_stage"; then
+    proxygpt_die "Удалённый временный каталог не инициализирован"
+    return 1
+  fi
 
   proxygpt_admin_master_require
 
