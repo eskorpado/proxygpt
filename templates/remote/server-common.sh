@@ -24,6 +24,13 @@ proxygpt_reload_sshd() {
   return 1
 }
 
+proxygpt_force_command_is_compatible() {
+  case "${1-}" in
+    none|/usr/sbin/nologin) return 0;;
+    *) return 1;;
+  esac
+}
+
 proxygpt_fix_tunnel_key_permissions() {
   local tunnel_user="${1:?требуется tunnel-пользователь}"
   local tunnel_home="${2:?требуется home tunnel-пользователя}"

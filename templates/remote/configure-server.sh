@@ -164,6 +164,10 @@ grep -Fxq 'kbdinteractiveauthentication no' <<< "$effective"
 grep -Fxq 'permittty no' <<< "$effective"
 grep -Fxq 'allowagentforwarding no' <<< "$effective"
 grep -Fxq 'x11forwarding no' <<< "$effective"
-grep -Fxq 'forcecommand none' <<< "$effective"
+force_command="$(awk '$1=="forcecommand" {$1=""; sub(/^ /, ""); print; exit}' <<< "$effective")"
+proxygpt_force_command_is_compatible "$force_command" || {
+  printf 'Небезопасное итоговое значение ForceCommand: %s\n' "$force_command" >&2
+  exit 1
+}
 
 printf 'Настройка сервера завершена\n'
